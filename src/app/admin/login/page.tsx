@@ -31,7 +31,7 @@ export default function AdminLogin() {
     }
 
     setLoading(true);
-    const res = await fetch('/api/auth', {
+    const res = await fetch(apiUrl('/api/auth'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: isSetup ? 'login' : 'setup', username, password }),
