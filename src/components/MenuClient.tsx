@@ -14,7 +14,9 @@ type Category = {
 
 type Settings = Record<string, string>;
 
-export default function MenuClient({ menuData, settings }: { menuData: Category[]; settings: Settings }) {
+type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string };
+
+export default function MenuClient({ menuData, settings, branch }: { menuData: Category[]; settings: Settings; branch?: BranchInfo }) {
   const [activeId, setActiveId] = useState<number>(menuData[0]?.id ?? 0);
   const [scrolled, setScrolled] = useState(false);
   const sectionRefs = useRef<Record<number, HTMLElement | null>>({});
@@ -225,6 +227,23 @@ export default function MenuClient({ menuData, settings }: { menuData: Category[
         <p style={{ color: 'var(--text-secondary)', fontSize: 11, marginTop: 4 }}>
           Dijital Menü
         </p>
+
+        {branch && (branch.address || branch.phone || branch.working_hours || branch.wifi_password) && (
+          <div className="mt-6 mx-auto max-w-xs flex flex-col gap-2">
+            {branch.address && (
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>📍 {branch.address}</p>
+            )}
+            {branch.phone && (
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>📞 {branch.phone}</p>
+            )}
+            {branch.working_hours && (
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>🕐 {branch.working_hours}</p>
+            )}
+            {branch.wifi_password && (
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>📶 Wifi: {branch.wifi_password}</p>
+            )}
+          </div>
+        )}
       </footer>
     </div>
   );
