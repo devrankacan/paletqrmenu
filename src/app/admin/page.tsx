@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getAuthSession } from '@/lib/auth';
-import { initDb, getCategories, getAllProductsWithCategory, getSettings } from '@/lib/db';
+import { initDb, getBranches, getSettings } from '@/lib/db';
 import AdminDashboard from '@/components/AdminDashboard';
 
 export const dynamic = 'force-dynamic';
@@ -10,14 +10,12 @@ export default async function AdminPage() {
   if (!session) redirect('/admin/login');
 
   initDb();
-  const categories = getCategories();
-  const products = getAllProductsWithCategory();
+  const branches = getBranches();
   const settings = getSettings();
 
   return (
     <AdminDashboard
-      categories={categories as never}
-      products={products as never}
+      initialBranches={branches as never}
       settings={settings}
       username={session.username}
     />
