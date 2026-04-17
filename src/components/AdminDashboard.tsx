@@ -236,7 +236,7 @@ export default function AdminDashboard({
         <div className="flex items-center gap-2">
           <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{username}</span>
           {selectedBranch && (
-            <a href={`/${selectedBranch.slug}`} target="_blank"
+            <a href={apiUrl(`/${selectedBranch.slug}`)} target="_blank"
               className="px-3 py-1.5 rounded-lg text-xs font-medium"
               style={{ background: 'rgba(201,169,110,0.1)', color: 'var(--gold)', border: '1px solid rgba(201,169,110,0.2)' }}>
               Menüyü Gör ↗
@@ -302,7 +302,7 @@ export default function AdminDashboard({
                     onChange={(e) => setBranchForm({ ...branchForm, slug: e.target.value })} />
                   {branchForm.slug && (
                     <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                      Menü linki: /paletpastanesi/{branchForm.slug}
+                      Menü linki: {apiUrl(`/${branchForm.slug}`)}
                     </p>
                   )}
                 </div>
@@ -324,7 +324,7 @@ export default function AdminDashboard({
                   style={{ background: 'var(--surface)', border: `1px solid ${selectedBranch?.id === b.id ? 'var(--gold)' : 'var(--border)'}` }}>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{b.name}</p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>/paletpastanesi/{b.slug}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{apiUrl(`/${b.slug}`)}</p>
                   </div>
                   <button onClick={() => selectBranch(b)}
                     className="px-3 py-1.5 rounded-lg text-xs font-medium flex-shrink-0"
