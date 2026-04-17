@@ -52,10 +52,13 @@ export function initDb() {
     );
   `);
 
-  // Migration: add logo_url to branches if missing
+  // Migration: add logo_url and theme to branches if missing
   const branchCols = (db.prepare('PRAGMA table_info(branches)').all() as Array<{ name: string }>).map((c) => c.name);
   if (!branchCols.includes('logo_url')) {
     db.exec(`ALTER TABLE branches ADD COLUMN logo_url TEXT DEFAULT ''`);
+  }
+  if (!branchCols.includes('theme')) {
+    db.exec(`ALTER TABLE branches ADD COLUMN theme TEXT DEFAULT 'classic'`);
   }
 
   // Migration: recreate categories without UNIQUE slug if no products exist

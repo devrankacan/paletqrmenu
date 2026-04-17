@@ -48,7 +48,7 @@ export default function AdminDashboard({
   // Branch form
   const [branchForm, setBranchForm] = useState({ name: '', slug: '' });
   const [editBranch, setEditBranch] = useState<Branch | null>(null);
-  const [branchSettingsForm, setBranchSettingsForm] = useState({ name: '', address: '', phone: '', working_hours: '', wifi_password: '', logo_url: '' });
+  const [branchSettingsForm, setBranchSettingsForm] = useState({ name: '', address: '', phone: '', working_hours: '', wifi_password: '', logo_url: '', theme: 'classic' });
 
   // Product form
   const emptyProduct = { name: '', description: '', price: '', image_url: '', category_id: '', is_featured: false };
@@ -87,7 +87,8 @@ export default function AdminDashboard({
 
   const selectBranch = (b: Branch) => {
     setSelectedBranch(b);
-    setBranchSettingsForm({ name: b.name, address: b.address || '', phone: b.phone || '', working_hours: b.working_hours || '', wifi_password: b.wifi_password || '', logo_url: (b as Branch & { logo_url?: string }).logo_url || '' });
+    const bb = b as Branch & { logo_url?: string; theme?: string };
+    setBranchSettingsForm({ name: b.name, address: b.address || '', phone: b.phone || '', working_hours: b.working_hours || '', wifi_password: b.wifi_password || '', logo_url: bb.logo_url || '', theme: bb.theme || 'classic' });
     setActiveTab('products');
   };
 
@@ -589,6 +590,87 @@ export default function AdminDashboard({
                       </button>
                     </div>
                   )}
+                </div>
+
+                {/* Theme picker */}
+                <div>
+                  <label className="block text-xs mb-3 uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Menü Görünümü</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {([
+                      {
+                        id: 'classic',
+                        label: 'Klasik',
+                        desc: 'Koyu zemin, altın vurgu',
+                        preview: (
+                          <div style={{ background: '#0d0d0d', height: 80, borderRadius: 8, overflow: 'hidden', padding: 6 }}>
+                            <div style={{ background: '#1a1a1a', borderRadius: 5, padding: '4px 6px', marginBottom: 4 }}>
+                              <div style={{ background: '#C9A96E', borderRadius: 3, height: 5, width: '60%' }} />
+                            </div>
+                            {[1, 2, 3].map((i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                                <div style={{ background: '#1a1a1a', borderRadius: 4, width: 18, height: 18, flexShrink: 0 }} />
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ background: '#2a2a2a', borderRadius: 2, height: 4, width: '70%', marginBottom: 2 }} />
+                                  <div style={{ background: '#C9A96E', borderRadius: 2, height: 3, width: '30%' }} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ),
+                      },
+                      {
+                        id: 'banner',
+                        label: 'Banner',
+                        desc: 'Sinematik koyu tema',
+                        preview: (
+                          <div style={{ background: '#0d0d0d', height: 80, borderRadius: 8, overflow: 'hidden', padding: 6 }}>
+                            <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 5, padding: '4px 6px', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
+                              <div style={{ background: '#C9A96E', borderRadius: 2, height: 4, width: '40%' }} />
+                            </div>
+                            {[1, 2].map((i) => (
+                              <div key={i} style={{ background: `linear-gradient(135deg, #1a1a2e, #16213e)`, borderRadius: 5, height: 22, marginBottom: 3, display: 'flex', alignItems: 'center', paddingLeft: 6 }}>
+                                <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: 2, height: 4, width: '50%' }} />
+                              </div>
+                            ))}
+                          </div>
+                        ),
+                      },
+                      {
+                        id: 'grid',
+                        label: 'Grid',
+                        desc: 'Aydınlık kart görünümü',
+                        preview: (
+                          <div style={{ background: '#f5f5f7', height: 80, borderRadius: 8, overflow: 'hidden', padding: 6 }}>
+                            <div style={{ background: '#fff', borderRadius: 5, padding: '3px 5px', marginBottom: 4 }}>
+                              <div style={{ background: '#E53E3E', borderRadius: 2, height: 4, width: '45%' }} />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
+                              {[1, 2, 3, 4].map((i) => (
+                                <div key={i} style={{ background: '#fff', borderRadius: 5, overflow: 'hidden' }}>
+                                  <div style={{ background: '#e8e8e8', height: 18 }} />
+                                  <div style={{ padding: '2px 3px' }}>
+                                    <div style={{ background: '#ddd', borderRadius: 2, height: 3, marginBottom: 2 }} />
+                                    <div style={{ background: '#E53E3E', borderRadius: 2, height: 3, width: '50%' }} />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ),
+                      },
+                    ] as { id: string; label: string; desc: string; preview: React.ReactNode }[]).map((t) => (
+                      <button key={t.id} type="button"
+                        onClick={() => setBranchSettingsForm((f) => ({ ...f, theme: t.id }))}
+                        className="rounded-xl overflow-hidden transition-all"
+                        style={{ border: `2px solid ${branchSettingsForm.theme === t.id ? 'var(--gold)' : 'var(--border)'}`, background: 'var(--surface-2)', padding: 0 }}>
+                        <div style={{ padding: '6px 6px 0' }}>{t.preview}</div>
+                        <div style={{ padding: '6px 6px 8px', textAlign: 'center' }}>
+                          <p className="font-semibold" style={{ color: branchSettingsForm.theme === t.id ? 'var(--gold)' : 'var(--text-primary)', fontSize: 12 }}>{t.label}</p>
+                          <p style={{ color: 'var(--text-secondary)', fontSize: 10, marginTop: 2 }}>{t.desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
               <button type="submit" className="w-full mt-5 py-3 rounded-xl font-semibold text-sm"
