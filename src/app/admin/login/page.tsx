@@ -14,7 +14,10 @@ export default function AdminLogin() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch(apiUrl('/api/auth')).then((r) => r.json()).then((d) => setIsSetup(d.hasAdmin));
+    fetch(apiUrl('/api/auth'))
+      .then((r) => r.json())
+      .then((d) => setIsSetup(d.hasAdmin))
+      .catch(() => setIsSetup(false));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
