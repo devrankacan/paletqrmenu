@@ -358,6 +358,27 @@ export default function AdminDashboard({
                   </button>
                 ))}
               </div>
+              <label className="flex-shrink-0 cursor-pointer px-3 py-2 rounded-xl text-sm font-medium"
+                style={{ background: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                title="CSV ile toplu içe aktar">
+                📥 CSV
+                <input type="file" accept=".csv,text/csv" className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !selectedBranch) return;
+                    e.target.value = '';
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    const res = await fetch(apiUrl(`/api/import?branch_id=${selectedBranch.id}`), { method: 'POST', body: fd });
+                    const data = await res.json();
+                    if (res.ok) {
+                      showMsg(`${data.imported} ürün aktarıldı ✓${data.errors.length ? ` (${data.errors.length} hata)` : ''}`);
+                      fetchBranchData(selectedBranch.id);
+                    } else {
+                      showMsg(data.error || 'İçe aktarma hatası');
+                    }
+                  }} />
+              </label>
               <button onClick={() => { setShowAddProduct(!showAddProduct); setEditProduct(null); setProductForm(emptyProduct); }}
                 className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold"
                 style={{ background: showAddProduct ? 'var(--surface)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: showAddProduct ? 'var(--text-secondary)' : '#0D0D0D', border: showAddProduct ? '1px solid var(--border)' : 'none' }}>
