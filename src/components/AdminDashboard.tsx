@@ -528,7 +528,6 @@ export default function AdminDashboard({
                   { key: 'phone', label: 'Telefon', placeholder: '0212 000 00 00' },
                   { key: 'working_hours', label: 'Çalışma Saatleri', placeholder: '09:00 - 22:00' },
                   { key: 'wifi_password', label: 'Wifi Şifresi', placeholder: 'wifi123' },
-                  { key: 'logo_url', label: 'Logo URL', placeholder: 'https://...' },
                 ].map(({ key, label, placeholder }) => (
                   <div key={key}>
                     <label className="block text-xs mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>{label}</label>
@@ -537,13 +536,39 @@ export default function AdminDashboard({
                       placeholder={placeholder} />
                   </div>
                 ))}
-              </div>
-              {branchSettingsForm.logo_url && (
-                <div className="mt-2 flex justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={branchSettingsForm.logo_url} alt="Logo önizleme" className="h-16 object-contain rounded-xl" />
+
+                {/* Logo upload */}
+                <div>
+                  <label className="block text-xs mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Şube Logosu</label>
+                  <label className="flex items-center gap-3 cursor-pointer rounded-xl px-4 py-3 transition-all"
+                    style={{ background: 'var(--surface-2)', border: '1px dashed var(--border)' }}>
+                    <span style={{ color: 'var(--gold)', fontSize: 20 }}>📁</span>
+                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Görsel seç (JPG, PNG, SVG — max 5MB)</span>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const fd = new FormData();
+                        fd.append('file', file);
+                        const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
+                        const data = await res.json();
+                        if (res.ok) setBranchSettingsForm((f) => ({ ...f, logo_url: data.url }));
+                        else showMsg(data.error || 'Yükleme hatası');
+                      }} />
+                  </label>
+                  {branchSettingsForm.logo_url && (
+                    <div className="mt-3 flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={branchSettingsForm.logo_url} alt="Logo" className="h-14 object-contain rounded-xl" style={{ background: 'var(--surface-2)', padding: 4 }} />
+                      <button type="button" className="text-xs px-3 py-1.5 rounded-lg"
+                        style={{ background: 'var(--surface-2)', color: '#ff6b6b', border: '1px solid var(--border)' }}
+                        onClick={() => setBranchSettingsForm((f) => ({ ...f, logo_url: '' }))}>
+                        Kaldır
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
               <button type="submit" className="w-full mt-5 py-3 rounded-xl font-semibold text-sm"
                 style={{ background: 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#0D0D0D' }}>
                 Kaydet
