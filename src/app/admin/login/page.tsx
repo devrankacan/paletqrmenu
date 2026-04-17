@@ -34,8 +34,9 @@ export default function AdminLogin() {
     }
 
     setLoading(true);
+    const url = apiUrl('/api/auth');
     try {
-      const res = await fetch(apiUrl('/api/auth'), {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: isSetup ? 'login' : 'setup', username, password }),
@@ -47,7 +48,7 @@ export default function AdminLogin() {
         router.push('/admin');
       }
     } catch (err) {
-      setError('Hata: ' + String(err));
+      setError('URL: ' + url + ' | Hata: ' + String(err));
     } finally {
       setLoading(false);
     }
