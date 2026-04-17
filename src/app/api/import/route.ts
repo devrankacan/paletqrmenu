@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   const file = formData.get('file') as File | null;
   if (!file) return NextResponse.json({ error: 'Dosya bulunamadı' }, { status: 400 });
 
-  const text = await file.text();
+  const text = (await file.text()).replace(/^\uFEFF/, ''); // strip UTF-8 BOM
   const rows = parseCSV(text);
   if (rows.length < 2) return NextResponse.json({ error: 'CSV boş veya geçersiz' }, { status: 400 });
 
@@ -153,5 +153,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ imported, errors, ok: true });
+  return NextResponse.json({ imported, errors, ok: true, isWoo, headerSample: header.slice(0, 5) });
 }

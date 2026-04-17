@@ -372,8 +372,9 @@ export default function AdminDashboard({
                     const res = await fetch(apiUrl(`/api/import?branch_id=${selectedBranch.id}`), { method: 'POST', body: fd });
                     const data = await res.json();
                     if (res.ok) {
-                      showMsg(`${data.imported} ürün aktarıldı ✓${data.errors.length ? ` (${data.errors.length} hata)` : ''}`);
-                      fetchBranchData(selectedBranch.id);
+                      const errDetail = data.errors?.length ? ` | İlk hata: ${data.errors[0]}` : '';
+                      showMsg(`${data.imported} ürün aktarıldı${data.errors?.length ? ` (${data.errors.length} hata${errDetail})` : ' ✓'}`);
+                      if (data.imported > 0) fetchBranchData(selectedBranch.id);
                     } else {
                       showMsg(data.error || 'İçe aktarma hatası');
                     }
