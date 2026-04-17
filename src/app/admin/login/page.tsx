@@ -46,8 +46,8 @@ export default function AdminLogin() {
       } else {
         router.push('/admin');
       }
-    } catch {
-      setError('Sunucuya bağlanılamadı');
+    } catch (err) {
+      setError('Hata: ' + String(err));
     } finally {
       setLoading(false);
     }
