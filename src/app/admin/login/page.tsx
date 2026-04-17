@@ -34,18 +34,22 @@ export default function AdminLogin() {
     }
 
     setLoading(true);
-    const res = await fetch(apiUrl('/api/auth'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: isSetup ? 'login' : 'setup', username, password }),
-    });
-    const data = await res.json();
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(data.error || 'Hata oluştu');
-    } else {
-      router.push('/admin');
+    try {
+      const res = await fetch(apiUrl('/api/auth'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: isSetup ? 'login' : 'setup', username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Hata oluştu');
+      } else {
+        router.push('/admin');
+      }
+    } catch {
+      setError('Sunucuya bağlanılamadı');
+    } finally {
+      setLoading(false);
     }
   };
 
