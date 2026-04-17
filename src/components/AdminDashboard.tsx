@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiUrl } from '@/lib/api';
 
 type Category = { id: number; name: string; slug: string; icon: string };
 type Product = {
@@ -54,13 +55,13 @@ export default function AdminDashboard({
   };
 
   const handleLogout = async () => {
-    await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) });
+    await fetch(apiUrl('/api/auth'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) });
     router.push('/admin/login');
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/products', {
+    const res = await fetch(apiUrl('/api/products'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, price: Number(form.price), is_featured: form.is_featured ? 1 : 0 }),
@@ -76,7 +77,7 @@ export default function AdminDashboard({
   const handleEditProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editProduct) return;
-    await fetch(`/api/products/${editProduct.id}`, {
+    await fetch(apiUrl(`/api/products/${editProduct.id}`), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, price: Number(form.price), is_featured: form.is_featured ? 1 : 0, category_id: Number(form.category_id) }),
@@ -89,13 +90,13 @@ export default function AdminDashboard({
 
   const handleDelete = async (id: number) => {
     if (!confirm('Bu ürünü silmek istediğinizden emin misiniz?')) return;
-    await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    await fetch(apiUrl(`/api/products/${id}`), { method: 'DELETE' });
     showMsg('Ürün silindi');
     refresh();
   };
 
   const toggleAvailable = async (p: Product) => {
-    await fetch(`/api/products/${p.id}`, {
+    await fetch(apiUrl(`/api/products/${p.id}`), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_available: p.is_available ? 0 : 1 }),
@@ -114,7 +115,7 @@ export default function AdminDashboard({
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch('/api/settings', {
+    await fetch(apiUrl('/api/settings'), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sForm),

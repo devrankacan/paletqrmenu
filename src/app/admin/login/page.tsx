@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiUrl } from '@/lib/api';
 
 export default function AdminLogin() {
   const [isSetup, setIsSetup] = useState<boolean | null>(null);
@@ -13,7 +14,7 @@ export default function AdminLogin() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/auth').then((r) => r.json()).then((d) => setIsSetup(d.hasAdmin));
+    fetch(apiUrl('/api/auth')).then((r) => r.json()).then((d) => setIsSetup(d.hasAdmin));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
