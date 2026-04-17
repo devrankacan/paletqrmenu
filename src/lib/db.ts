@@ -52,13 +52,16 @@ export function initDb() {
     );
   `);
 
-  // Migration: add logo_url and theme to branches if missing
+  // Migration: add logo_url, theme, cover_url to branches if missing
   const branchCols = (db.prepare('PRAGMA table_info(branches)').all() as Array<{ name: string }>).map((c) => c.name);
   if (!branchCols.includes('logo_url')) {
     db.exec(`ALTER TABLE branches ADD COLUMN logo_url TEXT DEFAULT ''`);
   }
   if (!branchCols.includes('theme')) {
     db.exec(`ALTER TABLE branches ADD COLUMN theme TEXT DEFAULT 'classic'`);
+  }
+  if (!branchCols.includes('cover_url')) {
+    db.exec(`ALTER TABLE branches ADD COLUMN cover_url TEXT DEFAULT ''`);
   }
 
   // Migration: recreate categories without UNIQUE slug if no products exist
@@ -144,6 +147,7 @@ export function createBranch(data: {
 export function updateBranch(id: number, data: Partial<{
   name: string; slug: string; address: string; phone: string;
   working_hours: string; wifi_password: string; is_active: number;
+  logo_url: string; cover_url: string; theme: string;
 }>) {
   const fields = Object.keys(data).map((k) => `${k} = @${k}`).join(', ');
   getDb().prepare(`UPDATE branches SET ${fields} WHERE id = @id`).run({ ...data, id });

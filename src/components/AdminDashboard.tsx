@@ -48,7 +48,7 @@ export default function AdminDashboard({
   // Branch form
   const [branchForm, setBranchForm] = useState({ name: '', slug: '' });
   const [editBranch, setEditBranch] = useState<Branch | null>(null);
-  const [branchSettingsForm, setBranchSettingsForm] = useState({ name: '', address: '', phone: '', working_hours: '', wifi_password: '', logo_url: '', theme: 'classic' });
+  const [branchSettingsForm, setBranchSettingsForm] = useState({ name: '', address: '', phone: '', working_hours: '', wifi_password: '', logo_url: '', cover_url: '', theme: 'classic' });
 
   // Product form
   const emptyProduct = { name: '', description: '', price: '', image_url: '', category_id: '', is_featured: false };
@@ -87,8 +87,8 @@ export default function AdminDashboard({
 
   const selectBranch = (b: Branch) => {
     setSelectedBranch(b);
-    const bb = b as Branch & { logo_url?: string; theme?: string };
-    setBranchSettingsForm({ name: b.name, address: b.address || '', phone: b.phone || '', working_hours: b.working_hours || '', wifi_password: b.wifi_password || '', logo_url: bb.logo_url || '', theme: bb.theme || 'classic' });
+    const bb = b as Branch & { logo_url?: string; cover_url?: string; theme?: string };
+    setBranchSettingsForm({ name: b.name, address: b.address || '', phone: b.phone || '', working_hours: b.working_hours || '', wifi_password: b.wifi_password || '', logo_url: bb.logo_url || '', cover_url: bb.cover_url || '', theme: bb.theme || 'classic' });
     setActiveTab('products');
   };
 
@@ -586,6 +586,39 @@ export default function AdminDashboard({
                       <button type="button" className="text-xs px-3 py-1.5 rounded-lg"
                         style={{ background: 'var(--surface-2)', color: '#ff6b6b', border: '1px solid var(--border)' }}
                         onClick={() => setBranchSettingsForm((f) => ({ ...f, logo_url: '' }))}>
+                        Kaldır
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cover image upload */}
+                <div>
+                  <label className="block text-xs mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Kapak Görseli</label>
+                  <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)', opacity: 0.7 }}>Ürünlerin üzerinde banner olarak gösterilir</p>
+                  <label className="flex items-center gap-3 cursor-pointer rounded-xl px-4 py-3 transition-all"
+                    style={{ background: 'var(--surface-2)', border: '1px dashed var(--border)' }}>
+                    <span style={{ color: 'var(--gold)', fontSize: 20 }}>🖼️</span>
+                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Görsel seç (JPG, PNG — max 5MB)</span>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const fd = new FormData();
+                        fd.append('file', file);
+                        const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
+                        const data = await res.json();
+                        if (res.ok) setBranchSettingsForm((f) => ({ ...f, cover_url: data.url }));
+                        else showMsg(data.error || 'Yükleme hatası');
+                      }} />
+                  </label>
+                  {branchSettingsForm.cover_url && (
+                    <div className="mt-3 flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={branchSettingsForm.cover_url} alt="Kapak" className="rounded-xl object-cover" style={{ height: 80, width: 140 }} />
+                      <button type="button" className="text-xs px-3 py-1.5 rounded-lg"
+                        style={{ background: 'var(--surface-2)', color: '#ff6b6b', border: '1px solid var(--border)' }}
+                        onClick={() => setBranchSettingsForm((f) => ({ ...f, cover_url: '' }))}>
                         Kaldır
                       </button>
                     </div>

@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const filename = `logo-${Date.now()}.${ext}`;
+  const filename = `upload-${Date.now()}.${ext}`;
 
   const uploadDir = path.join(process.cwd(), 'public', 'uploads');
   await mkdir(uploadDir, { recursive: true });

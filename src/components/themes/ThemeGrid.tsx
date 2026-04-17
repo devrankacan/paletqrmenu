@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[] };
-type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string };
+type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string; cover_url?: string };
 
 export default function ThemeGrid({
   menuData, settings, branch,
@@ -28,17 +28,22 @@ export default function ThemeGrid({
         <div className="flex items-center gap-3 px-4 py-3">
           {branch?.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={branch.logo_url} alt={name} style={{ height: 44, objectFit: 'contain' }} />
+            <img src={branch.logo_url} alt={name} style={{ height: 44, maxWidth: 160, objectFit: 'contain' }} />
           ) : (
-            <div className="flex items-center justify-center rounded-xl font-black text-white text-lg"
-              style={{ width: 44, height: 44, background: accent, flexShrink: 0 }}>
-              {name.charAt(0)}
-            </div>
+            <>
+              <div className="flex items-center justify-center rounded-xl font-black text-white text-lg"
+                style={{ width: 44, height: 44, background: accent, flexShrink: 0 }}>
+                {name.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-black truncate" style={{ color: '#1a1a1a', fontSize: 18 }}>{name}</p>
+                {branch?.name && <p className="text-xs truncate" style={{ color: '#999' }}>{branch.name}</p>}
+              </div>
+            </>
           )}
-          <div className="flex-1 min-w-0">
-            <p className="font-black truncate" style={{ color: '#1a1a1a', fontSize: 18 }}>{name}</p>
-            {branch?.name && <p className="text-xs truncate" style={{ color: '#999' }}>{branch.name}</p>}
-          </div>
+          {branch?.logo_url && branch?.name && (
+            <p className="text-xs truncate ml-2" style={{ color: '#999' }}>{branch.name}</p>
+          )}
         </div>
 
         {/* Info bar */}
@@ -53,6 +58,12 @@ export default function ThemeGrid({
           </div>
         )}
       </header>
+
+      {/* Cover image */}
+      {branch?.cover_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={branch.cover_url} alt="" style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
+      )}
 
       {/* Category filter */}
       <div className="flex gap-2 overflow-x-auto px-3 py-3" style={{ scrollbarWidth: 'none', background: '#fff', borderBottom: '1px solid #ebebeb' }}>

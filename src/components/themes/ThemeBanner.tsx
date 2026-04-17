@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[] };
-type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string };
+type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string; cover_url?: string };
 
 const GRADIENTS = [
   'linear-gradient(135deg, #1a1a2e, #16213e)',
@@ -117,6 +117,12 @@ export default function ThemeBanner({
           <p className="text-xs uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.5)' }}>{branch.name}</p>
         )}
       </header>
+
+      {/* Cover image */}
+      {branch?.cover_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={branch.cover_url} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} />
+      )}
 
       {/* Category banners */}
       <div className="flex flex-col gap-3 px-3 py-2 pb-10">
