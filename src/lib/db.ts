@@ -33,6 +33,7 @@ export function initDb() {
       phone TEXT DEFAULT '',
       working_hours TEXT DEFAULT '',
       wifi_password TEXT DEFAULT '',
+      logo_url TEXT DEFAULT '',
       is_active INTEGER DEFAULT 1,
       sort_order INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -50,6 +51,12 @@ export function initDb() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Migration: add logo_url to branches if missing
+  const branchCols = (db.prepare('PRAGMA table_info(branches)').all() as Array<{ name: string }>).map((c) => c.name);
+  if (!branchCols.includes('logo_url')) {
+    db.exec(`ALTER TABLE branches ADD COLUMN logo_url TEXT DEFAULT ''`);
+  }
 
   // Migration: recreate categories without UNIQUE slug if no products exist
   const catCols = (db.prepare('PRAGMA table_info(categories)').all() as Array<{ name: string }>).map((c) => c.name);

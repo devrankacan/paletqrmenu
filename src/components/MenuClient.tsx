@@ -14,7 +14,7 @@ type Category = {
 
 type Settings = Record<string, string>;
 
-type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string };
+type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string };
 
 export default function MenuClient({ menuData, settings, branch }: { menuData: Category[]; settings: Settings; branch?: BranchInfo }) {
   const [activeId, setActiveId] = useState<number>(menuData[0]?.id ?? 0);
@@ -84,12 +84,16 @@ export default function MenuClient({ menuData, settings, branch }: { menuData: C
         <div className="max-w-2xl mx-auto px-4 flex flex-col items-center">
           {!scrolled && (
             <div className="text-center fade-up">
-              {/* Ornament */}
-              <div className="flex items-center justify-center gap-3 mb-1">
-                <span style={{ height: 1, width: 40, background: 'linear-gradient(to right, transparent, var(--gold))' }} />
-                <span style={{ color: 'var(--gold)', fontSize: 18 }}>✦</span>
-                <span style={{ height: 1, width: 40, background: 'linear-gradient(to left, transparent, var(--gold))' }} />
-              </div>
+              {branch?.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={branch.logo_url} alt={name} className="mx-auto mb-3 object-contain" style={{ maxHeight: 72, maxWidth: 200 }} />
+              ) : (
+                <div className="flex items-center justify-center gap-3 mb-1">
+                  <span style={{ height: 1, width: 40, background: 'linear-gradient(to right, transparent, var(--gold))' }} />
+                  <span style={{ color: 'var(--gold)', fontSize: 18 }}>✦</span>
+                  <span style={{ height: 1, width: 40, background: 'linear-gradient(to left, transparent, var(--gold))' }} />
+                </div>
+              )}
               <h1
                 className="font-bold tracking-[0.15em] uppercase"
                 style={{ color: 'var(--text-primary)', fontSize: 28, letterSpacing: '0.2em' }}

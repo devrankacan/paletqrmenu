@@ -48,7 +48,7 @@ export default function AdminDashboard({
   // Branch form
   const [branchForm, setBranchForm] = useState({ name: '', slug: '' });
   const [editBranch, setEditBranch] = useState<Branch | null>(null);
-  const [branchSettingsForm, setBranchSettingsForm] = useState({ name: '', address: '', phone: '', working_hours: '', wifi_password: '' });
+  const [branchSettingsForm, setBranchSettingsForm] = useState({ name: '', address: '', phone: '', working_hours: '', wifi_password: '', logo_url: '' });
 
   // Product form
   const emptyProduct = { name: '', description: '', price: '', image_url: '', category_id: '', is_featured: false };
@@ -87,7 +87,7 @@ export default function AdminDashboard({
 
   const selectBranch = (b: Branch) => {
     setSelectedBranch(b);
-    setBranchSettingsForm({ name: b.name, address: b.address || '', phone: b.phone || '', working_hours: b.working_hours || '', wifi_password: b.wifi_password || '' });
+    setBranchSettingsForm({ name: b.name, address: b.address || '', phone: b.phone || '', working_hours: b.working_hours || '', wifi_password: b.wifi_password || '', logo_url: (b as Branch & { logo_url?: string }).logo_url || '' });
     setActiveTab('products');
   };
 
@@ -528,6 +528,7 @@ export default function AdminDashboard({
                   { key: 'phone', label: 'Telefon', placeholder: '0212 000 00 00' },
                   { key: 'working_hours', label: 'Çalışma Saatleri', placeholder: '09:00 - 22:00' },
                   { key: 'wifi_password', label: 'Wifi Şifresi', placeholder: 'wifi123' },
+                  { key: 'logo_url', label: 'Logo URL', placeholder: 'https://...' },
                 ].map(({ key, label, placeholder }) => (
                   <div key={key}>
                     <label className="block text-xs mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>{label}</label>
@@ -537,6 +538,12 @@ export default function AdminDashboard({
                   </div>
                 ))}
               </div>
+              {branchSettingsForm.logo_url && (
+                <div className="mt-2 flex justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={branchSettingsForm.logo_url} alt="Logo önizleme" className="h-16 object-contain rounded-xl" />
+                </div>
+              )}
               <button type="submit" className="w-full mt-5 py-3 rounded-xl font-semibold text-sm"
                 style={{ background: 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#0D0D0D' }}>
                 Kaydet
