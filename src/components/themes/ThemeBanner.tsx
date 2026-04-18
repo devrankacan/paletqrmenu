@@ -51,7 +51,7 @@ export default function ThemeBanner({ menuData, settings, branch }: {
   if (activeCat) {
     return (
       <div style={{ background: '#0d0d0d', minHeight: '100vh' }}>
-        {showInfo && <InfoDrawer branch={branch!} onClose={() => setShowInfo(false)} />}
+        {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} />}
         {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
         <header className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
           style={{ background: 'rgba(10,10,10,0.97)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -93,7 +93,7 @@ export default function ThemeBanner({ menuData, settings, branch }: {
 
   return (
     <div style={{ background: '#0d0d0d', minHeight: '100vh' }}>
-      {showInfo && <InfoDrawer branch={branch!} onClose={() => setShowInfo(false)} />}
+      {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} />}
       {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
       <header className="flex items-center gap-3 px-4 py-3" style={{ background: 'rgba(0,0,0,0.6)' }}>
         <InfoBtn />

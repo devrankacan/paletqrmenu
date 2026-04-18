@@ -35,7 +35,7 @@ export default function ThemeGrid({
 
   return (
     <div style={{ background: '#f5f5f7', minHeight: '100vh' }}>
-      {showInfo && <InfoDrawer branch={branch ?? {}} onClose={() => setShowInfo(false)} />}
+      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} />}
       {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
 
       {/* Header */}

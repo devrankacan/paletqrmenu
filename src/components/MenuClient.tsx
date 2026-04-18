@@ -42,7 +42,7 @@ export default function MenuClient({ menuData, settings, branch }: {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-      {showInfo && <InfoDrawer branch={branch ?? {}} onClose={() => setShowInfo(false)} />}
+      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} />}
       {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
 
       {/* ─── HEADER ─── */}

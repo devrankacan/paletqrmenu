@@ -5,12 +5,22 @@ import { useState } from 'react';
 export type OverlayBranch = {
   address?: string; phone?: string; working_hours?: string;
   wifi_password?: string; instagram?: string; contact_email?: string;
+  logo_url?: string; name?: string;
 };
 
 const overlayStyle: React.CSSProperties = {
   position: 'fixed', inset: 0, zIndex: 40,
   background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)',
 };
+
+function IconCircle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-center flex-shrink-0"
+      style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', fontSize: 17 }}>
+      {children}
+    </div>
+  );
+}
 
 /* ── Info Drawer ─────────────────────────────────────────── */
 export function InfoDrawer({ branch, onClose }: { branch: OverlayBranch; onClose: () => void }) {
@@ -30,67 +40,111 @@ export function InfoDrawer({ branch, onClose }: { branch: OverlayBranch; onClose
       : `https://instagram.com/${branch.instagram.replace(/^@/, '')}`
     : '';
 
-  const Row = ({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) => (
-    <div className="flex items-start gap-3">
-      <span style={{ fontSize: 22, flexShrink: 0, marginTop: 1 }}>{icon}</span>
-      <div className="flex-1 min-w-0">
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>{label}</p>
-        {children}
-      </div>
-    </div>
-  );
+  const hasBusinessInfo = branch.address || branch.phone || branch.working_hours || branch.wifi_password || branch.contact_email;
 
   return (
     <>
       <div style={overlayStyle} onClick={onClose} />
-      <div className="fixed top-0 left-0 h-full flex flex-col"
-        style={{ width: 'min(300px, 82vw)', background: '#111', borderRight: '1px solid rgba(255,255,255,0.1)', zIndex: 50 }}>
-        <div className="flex items-center justify-between px-5 py-4"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <span className="font-bold uppercase tracking-widest" style={{ color: '#C9A96E', fontSize: 13 }}>Bilgi</span>
-          <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.45)', fontSize: 22, lineHeight: 1 }}>✕</button>
+      <div className="fixed top-0 left-0 h-full flex flex-col overflow-y-auto"
+        style={{ width: 'min(320px, 85vw)', background: '#1c1c1c', zIndex: 50 }}>
+
+        {/* Gradient header */}
+        <div className="flex items-center justify-between flex-shrink-0 px-5 py-4"
+          style={{ background: 'linear-gradient(135deg, #1e3a5f, #0f2744)', minHeight: 62 }}>
+          <span className="font-bold" style={{ color: '#fff', fontSize: 18, letterSpacing: '0.01em' }}>Hoşgeldiniz!</span>
+          <button onClick={onClose}
+            className="flex items-center justify-center rounded-full"
+            style={{ width: 32, height: 32, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 16 }}>
+            ✕
+          </button>
         </div>
-        <div className="flex flex-col gap-6 px-5 py-6 overflow-y-auto flex-1">
-          {branch.working_hours && (
-            <Row icon="🕒" label="Çalışma Saatleri">
-              <p style={{ color: '#fff', fontSize: 14 }}>{branch.working_hours}</p>
-            </Row>
-          )}
-          {branch.wifi_password && (
-            <Row icon="📶" label="Wi-Fi Şifresi">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p style={{ color: '#fff', fontSize: 14, fontFamily: 'monospace', wordBreak: 'break-all' }}>{branch.wifi_password}</p>
-                <button onClick={copyWifi}
-                  className="flex-shrink-0 px-2 py-1 rounded-lg text-xs font-medium"
-                  style={{ background: wifiCopied ? 'rgba(74,222,128,0.15)' : 'rgba(201,169,110,0.15)', color: wifiCopied ? '#4ade80' : '#C9A96E', border: `1px solid ${wifiCopied ? 'rgba(74,222,128,0.3)' : 'rgba(201,169,110,0.3)'}` }}>
-                  {wifiCopied ? '✓ Kopyalandı' : 'Kopyala'}
-                </button>
-              </div>
-            </Row>
-          )}
-          {branch.address && (
-            <Row icon="📍" label="Adres">
-              <a href={`https://maps.google.com/?q=${encodeURIComponent(branch.address)}`}
-                target="_blank" rel="noreferrer"
-                style={{ color: '#C9A96E', fontSize: 14, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-                {branch.address} ↗
+
+        {/* Logo + name */}
+        {(branch.logo_url || branch.name) && (
+          <div className="flex flex-col items-center text-center px-6 py-6"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            {branch.logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={branch.logo_url} alt={branch.name || ''}
+                style={{ maxHeight: 80, maxWidth: 180, objectFit: 'contain', marginBottom: branch.name ? 12 : 0 }} />
+            )}
+            {branch.name && (
+              <p className="font-bold" style={{ color: '#fff', fontSize: 15, lineHeight: 1.4 }}>{branch.name}</p>
+            )}
+          </div>
+        )}
+
+        {/* Business info */}
+        {hasBusinessInfo && (
+          <div className="px-5 py-5"
+            style={{ borderBottom: branch.instagram ? '1px solid rgba(255,255,255,0.08)' : undefined }}>
+            <p className="mb-4" style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
+              İşletme Bilgileri
+            </p>
+            <div className="flex flex-col gap-4">
+              {branch.address && (
+                <a href={`https://maps.google.com/?q=${encodeURIComponent(branch.address)}`}
+                  target="_blank" rel="noreferrer" className="flex items-start gap-3">
+                  <IconCircle>🏠</IconCircle>
+                  <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.5, paddingTop: 9 }}>{branch.address}</p>
+                </a>
+              )}
+              {branch.working_hours && (
+                <div className="flex items-center gap-3">
+                  <IconCircle>🕒</IconCircle>
+                  <p style={{ color: '#fff', fontSize: 13 }}>{branch.working_hours}</p>
+                </div>
+              )}
+              {branch.contact_email && (
+                <a href={`mailto:${branch.contact_email}`} className="flex items-center gap-3">
+                  <IconCircle>✉️</IconCircle>
+                  <p style={{ color: '#fff', fontSize: 13 }}>{branch.contact_email}</p>
+                </a>
+              )}
+              {branch.phone && (
+                <a href={`tel:${branch.phone}`} className="flex items-center gap-3">
+                  <IconCircle>📞</IconCircle>
+                  <p style={{ color: '#fff', fontSize: 13 }}>{branch.phone}</p>
+                </a>
+              )}
+              {branch.wifi_password && (
+                <div className="flex items-center gap-3">
+                  <IconCircle>📶</IconCircle>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <p style={{ color: '#fff', fontSize: 13, fontFamily: 'monospace', wordBreak: 'break-all', flex: 1 }}>
+                      {branch.wifi_password}
+                    </p>
+                    <button onClick={copyWifi} className="flex-shrink-0 px-2 py-1 rounded-lg text-xs font-medium"
+                      style={{
+                        background: wifiCopied ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.1)',
+                        color: wifiCopied ? '#4ade80' : 'rgba(255,255,255,0.7)',
+                        border: `1px solid ${wifiCopied ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.15)'}`,
+                      }}>
+                      {wifiCopied ? '✓' : 'Kopyala'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Social media */}
+        {branch.instagram && (
+          <div className="px-5 py-5">
+            <p className="mb-4" style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
+              Sosyal Medya Hesaplarımız
+            </p>
+            <div className="flex flex-col gap-3">
+              <a href={instaUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3">
+                <IconCircle>📸</IconCircle>
+                <p style={{ color: '#fff', fontSize: 13 }}>
+                  {branch.instagram.startsWith('@') ? branch.instagram : `@${branch.instagram}`}
+                </p>
               </a>
-            </Row>
-          )}
-          {branch.phone && (
-            <Row icon="📞" label="Telefon">
-              <a href={`tel:${branch.phone}`} style={{ color: '#C9A96E', fontSize: 14 }}>{branch.phone}</a>
-            </Row>
-          )}
-          {instaUrl && (
-            <Row icon="📸" label="Instagram">
-              <a href={instaUrl} target="_blank" rel="noreferrer"
-                style={{ color: '#C9A96E', fontSize: 14, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-                {branch.instagram?.startsWith('@') ? branch.instagram : `@${branch.instagram}`} ↗
-              </a>
-            </Row>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
