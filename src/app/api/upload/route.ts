@@ -25,10 +25,10 @@ export async function POST(req: NextRequest) {
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const filename = `upload-${Date.now()}.${ext}`;
 
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+  const uploadDir = path.join(process.cwd(), 'data', 'uploads');
   await mkdir(uploadDir, { recursive: true });
   await writeFile(path.join(uploadDir, filename), Buffer.from(await file.arrayBuffer()));
 
   const basePath = process.env.BASE_PATH || '';
-  return NextResponse.json({ url: `${basePath}/uploads/${filename}` });
+  return NextResponse.json({ url: `${basePath}/api/files/${filename}` });
 }
