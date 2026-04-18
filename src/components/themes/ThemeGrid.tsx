@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { InfoDrawer, SearchOverlay } from './BusinessOverlays';
 import translations, { type Lang, nextLang } from '@/lib/translations';
+import { translateMenu } from '@/lib/translate';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
@@ -26,6 +27,9 @@ export default function ThemeGrid({
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [lang, setLang] = useState<Lang>('tr');
+  const [displayData, setDisplayData] = useState(menuData);
+  const [translating, setTranslating] = useState(false);
+  const cache = useRef<Partial<Record<Lang, Category[]>>>({});
 
   const name = settings.restaurant_name || 'Restoran';
   const currency = settings.currency || '₺';
@@ -33,13 +37,27 @@ export default function ThemeGrid({
   const tr = translations[lang];
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
 
-  const activeCat = menuData.find((c) => c.id === activeCatId);
-  const displayed = activeCat?.products.map((p) => ({ ...p, categoryName: activeCat.name })) ?? [];
+  const activeCat = displayData.find((c) => c.id === activeCatId);
+  const displayed = activeCat?.products ?? [];
+
+  const changeLang = async (newLang: Lang) => {
+    setLang(newLang);
+    if (newLang === 'tr') { setDisplayData(menuData); return; }
+    if (cache.current[newLang]) { setDisplayData(cache.current[newLang]!); return; }
+    setTranslating(true);
+    try {
+      const translated = await translateMenu(menuData, newLang);
+      cache.current[newLang] = translated;
+      setDisplayData(translated);
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   return (
     <div dir={dir} style={{ background: '#f5f5f7', minHeight: '100vh' }}>
       {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={false} lang={lang} />}
-      {showSearch && <SearchOverlay menuData={menuData} currency={currency} lang={lang} isDark={false} onClose={() => setShowSearch(false)} />}
+      {showSearch && <SearchOverlay menuData={displayData} currency={currency} lang={lang} isDark={false} onClose={() => setShowSearch(false)} />}
 
       {/* Header */}
       <header style={{ background: '#fff', borderBottom: '1px solid #ebebeb' }}>
@@ -64,14 +82,14 @@ export default function ThemeGrid({
           )}
           <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
             <button onClick={() => setShowSearch(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
+              className="flex items-center px-2.5 py-1.5 rounded-lg text-sm"
               style={{ background: '#f0f0f0', color: '#444' }}>
               🔍
             </button>
-            <button onClick={() => setLang(nextLang(lang))}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold"
-              style={{ background: '#f0f0f0', color: '#444' }}>
-              {lang.toUpperCase()}
+            <button onClick={() => changeLang(nextLang(lang))} disabled={translating}
+              className="flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold"
+              style={{ background: '#f0f0f0', color: translating ? '#bbb' : '#444' }}>
+              {translating ? '···' : lang.toUpperCase()}
             </button>
             <button onClick={() => setShowInfo(true)}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
@@ -91,7 +109,7 @@ export default function ThemeGrid({
       {/* Visual category selector */}
       <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', background: '#fff', borderBottom: '2px solid #ebebeb' }}>
         <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
-          {menuData.map((c, idx) => {
+          {displayData.map((c, idx) => {
             const isActive = c.id === activeCatId;
             return (
               <button key={c.id} onClick={() => setActiveCatId(c.id)}
@@ -103,17 +121,13 @@ export default function ThemeGrid({
                 }}>
                 {c.cover_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.cover_url} alt={c.name}
-                    className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={c.cover_url} alt={c.name} className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
-                  <div className="absolute inset-0"
-                    style={{ background: CAT_GRADIENTS[idx % CAT_GRADIENTS.length] }} />
+                  <div className="absolute inset-0" style={{ background: CAT_GRADIENTS[idx % CAT_GRADIENTS.length] }} />
                 )}
-                <div className="absolute inset-0"
-                  style={{ background: isActive ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.5)' }} />
+                <div className="absolute inset-0" style={{ background: isActive ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.5)' }} />
                 <p className="absolute bottom-0 left-0 right-0 px-2 pb-1.5 font-bold leading-tight"
-                  style={{ color: '#fff', fontSize: 11, lineHeight: 1.25,
-                    textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+                  style={{ color: '#fff', fontSize: 11, lineHeight: 1.25, textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
                   {c.name}
                 </p>
               </button>

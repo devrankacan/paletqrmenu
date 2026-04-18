@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { InfoDrawer, SearchOverlay } from '@/components/themes/BusinessOverlays';
 import translations, { type Lang, nextLang } from '@/lib/translations';
+import { translateMenu } from '@/lib/translate';
 
 type Product = {
   id: number; name: string; description: string; price: number;
@@ -35,18 +36,35 @@ export default function MenuClient({ menuData, settings, branch }: {
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [lang, setLang] = useState<Lang>('tr');
+  const [displayData, setDisplayData] = useState(menuData);
+  const [translating, setTranslating] = useState(false);
+  const cache = useRef<Partial<Record<Lang, Category[]>>>({});
 
   const name = settings.restaurant_name || 'Palet';
   const subtitle = settings.restaurant_subtitle || 'Lezzet Sanatı';
   const currency = settings.currency || '₺';
   const tr = translations[lang];
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
-  const activeCat = menuData.find((c) => c.id === activeCatId);
+  const activeCat = displayData.find((c) => c.id === activeCatId);
+
+  const changeLang = async (newLang: Lang) => {
+    setLang(newLang);
+    if (newLang === 'tr') { setDisplayData(menuData); return; }
+    if (cache.current[newLang]) { setDisplayData(cache.current[newLang]!); return; }
+    setTranslating(true);
+    try {
+      const translated = await translateMenu(menuData, newLang);
+      cache.current[newLang] = translated;
+      setDisplayData(translated);
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   return (
     <div dir={dir} style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} lang={lang} />}
-      {showSearch && <SearchOverlay menuData={menuData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
+      {showSearch && <SearchOverlay menuData={displayData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
 
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-50"
@@ -69,10 +87,10 @@ export default function MenuClient({ menuData, settings, branch }: {
               style={{ background: 'var(--surface)', color: 'var(--gold)', border: '1px solid var(--border)', fontSize: 17 }}>
               🔍
             </button>
-            <button onClick={() => setLang(nextLang(lang))}
+            <button onClick={() => changeLang(nextLang(lang))} disabled={translating}
               className="h-9 px-2.5 rounded-xl flex items-center justify-center font-bold text-xs"
-              style={{ background: 'var(--surface)', color: 'var(--gold)', border: '1px solid var(--border)', minWidth: 36 }}>
-              {lang.toUpperCase()}
+              style={{ background: 'var(--surface)', color: translating ? 'var(--text-secondary)' : 'var(--gold)', border: '1px solid var(--border)', minWidth: 36 }}>
+              {translating ? '···' : lang.toUpperCase()}
             </button>
             <button onClick={() => setShowInfo(true)}
               className="w-9 h-9 rounded-xl flex items-center justify-center"
@@ -106,7 +124,7 @@ export default function MenuClient({ menuData, settings, branch }: {
       <div className="sticky z-40 overflow-x-auto"
         style={{ top: 60, scrollbarWidth: 'none', background: 'rgba(13,13,13,0.97)', borderBottom: '1px solid var(--border)' }}>
         <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
-          {menuData.map((cat, idx) => {
+          {displayData.map((cat, idx) => {
             const isActive = cat.id === activeCatId;
             return (
               <button key={cat.id} onClick={() => setActiveCatId(cat.id)}

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { InfoDrawer, SearchOverlay } from './BusinessOverlays';
 import translations, { type Lang, nextLang } from '@/lib/translations';
+import { translateMenu } from '@/lib/translate';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
@@ -24,15 +25,33 @@ const GRADIENTS = [
 export default function ThemeBanner({ menuData, settings, branch }: {
   menuData: Category[]; settings: Record<string, string>; branch?: BranchInfo;
 }) {
-  const [activeCat, setActiveCat] = useState<Category | null>(null);
+  const [activeCatId, setActiveCatId] = useState<number | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [lang, setLang] = useState<Lang>('tr');
+  const [displayData, setDisplayData] = useState(menuData);
+  const [translating, setTranslating] = useState(false);
+  const cache = useRef<Partial<Record<Lang, Category[]>>>({});
 
   const name = settings.restaurant_name || 'Restoran';
   const currency = settings.currency || '₺';
   const tr = translations[lang];
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const activeCat = activeCatId !== null ? displayData.find((c) => c.id === activeCatId) ?? null : null;
+
+  const changeLang = async (newLang: Lang) => {
+    setLang(newLang);
+    if (newLang === 'tr') { setDisplayData(menuData); return; }
+    if (cache.current[newLang]) { setDisplayData(cache.current[newLang]!); return; }
+    setTranslating(true);
+    try {
+      const translated = await translateMenu(menuData, newLang);
+      cache.current[newLang] = translated;
+      setDisplayData(translated);
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   const getCoverImage = (cat: Category) =>
     cat.cover_url || cat.products.find((p) => p.image_url)?.image_url || '';
@@ -46,10 +65,10 @@ export default function ThemeBanner({ menuData, settings, branch }: {
   );
 
   const LangBtn = () => (
-    <button onClick={() => setLang(nextLang(lang))}
+    <button onClick={() => changeLang(nextLang(lang))} disabled={translating}
       className="h-10 px-2.5 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-xs"
-      style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', minWidth: 36 }}>
-      {lang.toUpperCase()}
+      style={{ background: 'rgba(255,255,255,0.08)', color: translating ? 'rgba(255,255,255,0.3)' : '#fff', minWidth: 36 }}>
+      {translating ? '···' : lang.toUpperCase()}
     </button>
   );
 
@@ -57,10 +76,10 @@ export default function ThemeBanner({ menuData, settings, branch }: {
     return (
       <div dir={dir} style={{ background: '#0d0d0d', minHeight: '100vh' }}>
         {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} lang={lang} />}
-        {showSearch && <SearchOverlay menuData={menuData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
+        {showSearch && <SearchOverlay menuData={displayData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
         <header className="sticky top-0 z-30 flex items-center gap-2 px-4 py-3"
           style={{ background: 'rgba(10,10,10,0.97)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <BtnIcon onClick={() => setActiveCat(null)}>{tr.back}</BtnIcon>
+          <BtnIcon onClick={() => setActiveCatId(null)}>{tr.back}</BtnIcon>
           <h2 className="font-bold uppercase tracking-wider flex-1 truncate" style={{ color: '#fff', fontSize: 16 }}>{activeCat.name}</h2>
           <BtnIcon onClick={() => setShowSearch(true)}>🔍</BtnIcon>
           <LangBtn />
@@ -98,7 +117,7 @@ export default function ThemeBanner({ menuData, settings, branch }: {
   return (
     <div dir={dir} style={{ background: '#0d0d0d', minHeight: '100vh' }}>
       {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} lang={lang} />}
-      {showSearch && <SearchOverlay menuData={menuData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
+      {showSearch && <SearchOverlay menuData={displayData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
       <header className="flex items-center gap-2 px-4 py-3" style={{ background: 'rgba(0,0,0,0.6)' }}>
         <BtnIcon onClick={() => setShowInfo(true)}>☰</BtnIcon>
         <div className="flex-1 flex items-center justify-center px-2 min-w-0">
@@ -120,12 +139,12 @@ export default function ThemeBanner({ menuData, settings, branch }: {
         <img src={branch.cover_url} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} />
       )}
       <div className="flex flex-col gap-3 px-3 py-3 pb-12">
-        {menuData.length === 0 ? (
+        {displayData.length === 0 ? (
           <div className="text-center py-20" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>{tr.noCategories}</div>
-        ) : menuData.map((cat, idx) => {
+        ) : displayData.map((cat, idx) => {
           const cover = getCoverImage(cat);
           return (
-            <button key={cat.id} onClick={() => setActiveCat(cat)}
+            <button key={cat.id} onClick={() => setActiveCatId(cat.id)}
               className="relative w-full rounded-2xl overflow-hidden text-left" style={{ height: 90 }}>
               {cover ? (
                 // eslint-disable-next-line @next/next/no-img-element
