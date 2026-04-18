@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
-type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[] };
+type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
 type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string; cover_url?: string };
 
 export default function ThemeGrid({
@@ -89,6 +89,16 @@ export default function ThemeGrid({
           </button>
         ))}
       </div>
+
+      {/* Selected category cover image */}
+      {activeCatId !== 'all' && (() => {
+        const cat = menuData.find((c) => c.id === activeCatId);
+        return cat?.cover_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={cat.cover_url} alt={cat.name}
+            style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
+        ) : null;
+      })()}
 
       {/* Product grid */}
       <div className="px-3 py-3 pb-10">
