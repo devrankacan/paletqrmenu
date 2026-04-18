@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { InfoDrawer, FeedbackModal } from '@/components/themes/BusinessOverlays';
+import { InfoDrawer } from '@/components/themes/BusinessOverlays';
 
 type Product = {
   id: number; name: string; description: string; price: number;
@@ -32,7 +32,6 @@ export default function MenuClient({ menuData, settings, branch }: {
 }) {
   const [activeCatId, setActiveCatId] = useState<number>(() => menuData[0]?.id ?? 0);
   const [showInfo, setShowInfo] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
 
   const name = settings.restaurant_name || 'Palet';
   const subtitle = settings.restaurant_subtitle || 'Lezzet Sanatı';
@@ -42,8 +41,7 @@ export default function MenuClient({ menuData, settings, branch }: {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} />}
-      {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
+      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} />}}
 
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-50"
@@ -61,21 +59,14 @@ export default function MenuClient({ menuData, settings, branch }: {
                 style={{ color: 'var(--text-primary)', fontSize: 16 }}>{name}</span>
             </div>
           )}
-          {/* Buttons */}
-          <div className="flex items-center gap-2">
-            {hasInfo && (
-              <button onClick={() => setShowInfo(true)}
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: 'var(--surface)', color: 'var(--gold)', border: '1px solid var(--border)', fontSize: 17 }}>
-                ☰
-              </button>
-            )}
-            <button onClick={() => setShowFeedback(true)}
+          {/* Info button */}
+          {(hasInfo || branch?.contact_email) && (
+            <button onClick={() => setShowInfo(true)}
               className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: 'rgba(201,169,110,0.1)', color: 'var(--gold)', border: '1px solid rgba(201,169,110,0.25)', fontSize: 15 }}>
-              ✉
+              style={{ background: 'var(--surface)', color: 'var(--gold)', border: '1px solid var(--border)', fontSize: 17 }}>
+              ☰
             </button>
-          </div>
+          )}
         </div>
       </header>
 

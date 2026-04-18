@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { InfoDrawer, FeedbackModal } from './BusinessOverlays';
+import { InfoDrawer } from './BusinessOverlays';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
@@ -25,7 +25,6 @@ export default function ThemeBanner({ menuData, settings, branch }: {
 }) {
   const [activeCat, setActiveCat] = useState<Category | null>(null);
   const [showInfo, setShowInfo] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
 
   const name = settings.restaurant_name || 'Restoran';
   const currency = settings.currency || '₺';
@@ -34,25 +33,16 @@ export default function ThemeBanner({ menuData, settings, branch }: {
   const getCoverImage = (cat: Category) =>
     cat.cover_url || cat.products.find((p) => p.image_url)?.image_url || '';
 
-  const InfoBtn = () => hasInfo ? (
+  const InfoBtn = () => (hasInfo || branch?.contact_email) ? (
     <button onClick={() => setShowInfo(true)}
       className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
       style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 20 }}>☰</button>
   ) : <div style={{ width: 40 }} />;
 
-  const FeedbackBtn = () => (
-    <button onClick={() => setShowFeedback(true)}
-      className="flex items-center gap-1.5 px-3 h-10 rounded-xl flex-shrink-0 text-sm font-semibold"
-      style={{ background: 'rgba(201,169,110,0.15)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.25)' }}>
-      ✉ <span className="hidden sm:inline">Geri Bildirim</span>
-    </button>
-  );
-
   if (activeCat) {
     return (
       <div style={{ background: '#0d0d0d', minHeight: '100vh' }}>
-        {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} />}
-        {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
+        {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} />}
         <header className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
           style={{ background: 'rgba(10,10,10,0.97)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <InfoBtn />
@@ -60,7 +50,6 @@ export default function ThemeBanner({ menuData, settings, branch }: {
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 18 }}>←</button>
           <h2 className="font-bold uppercase tracking-wider flex-1 truncate" style={{ color: '#fff', fontSize: 16 }}>{activeCat.name}</h2>
-          <FeedbackBtn />
         </header>
         <div className="flex flex-col gap-3 p-4 pb-24">
           {activeCat.products.length === 0 ? (
@@ -93,8 +82,7 @@ export default function ThemeBanner({ menuData, settings, branch }: {
 
   return (
     <div style={{ background: '#0d0d0d', minHeight: '100vh' }}>
-      {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} />}
-      {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
+      {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} />}
       <header className="flex items-center gap-3 px-4 py-3" style={{ background: 'rgba(0,0,0,0.6)' }}>
         <InfoBtn />
         <div className="flex-1 flex items-center justify-center px-2 min-w-0">
@@ -108,7 +96,6 @@ export default function ThemeBanner({ menuData, settings, branch }: {
             </div>
           )}
         </div>
-        <FeedbackBtn />
       </header>
       {branch?.cover_url && (
         // eslint-disable-next-line @next/next/no-img-element

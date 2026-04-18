@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { InfoDrawer, FeedbackModal } from './BusinessOverlays';
+import { InfoDrawer } from './BusinessOverlays';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
@@ -23,7 +23,6 @@ export default function ThemeGrid({
 }) {
   const [activeCatId, setActiveCatId] = useState<number>(() => menuData[0]?.id ?? 0);
   const [showInfo, setShowInfo] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
 
   const name = settings.restaurant_name || 'Restoran';
   const currency = settings.currency || '₺';
@@ -35,8 +34,7 @@ export default function ThemeGrid({
 
   return (
     <div style={{ background: '#f5f5f7', minHeight: '100vh' }}>
-      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} />}
-      {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
+      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={false} />}
 
       {/* Header */}
       <header style={{ background: '#fff', borderBottom: '1px solid #ebebeb' }}>
@@ -60,18 +58,13 @@ export default function ThemeGrid({
             <p className="text-xs truncate ml-2 flex-1 min-w-0" style={{ color: '#999' }}>{branch.name}</p>
           )}
           <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
-            {hasInfo && (
+            {(hasInfo || branch?.contact_email) && (
               <button onClick={() => setShowInfo(true)}
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
                 style={{ background: '#f0f0f0', color: '#444' }}>
                 ☰ Bilgi
               </button>
             )}
-            <button onClick={() => setShowFeedback(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
-              style={{ background: '#fff0f0', color: '#E53E3E', border: '1px solid #ffd5d5' }}>
-              ✉
-            </button>
           </div>
         </div>
       </header>
