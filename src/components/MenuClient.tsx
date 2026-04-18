@@ -41,7 +41,7 @@ export default function MenuClient({ menuData, settings, branch }: {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} />}}
+      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} />}
 
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-50"
@@ -59,14 +59,12 @@ export default function MenuClient({ menuData, settings, branch }: {
                 style={{ color: 'var(--text-primary)', fontSize: 16 }}>{name}</span>
             </div>
           )}
-          {/* Info button */}
-          {(hasInfo || branch?.contact_email) && (
-            <button onClick={() => setShowInfo(true)}
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: 'var(--surface)', color: 'var(--gold)', border: '1px solid var(--border)', fontSize: 17 }}>
-              ☰
-            </button>
-          )}
+          {/* Info button — always visible, drawer has feedback even with no branch info */}
+          <button onClick={() => setShowInfo(true)}
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ background: 'var(--surface)', color: 'var(--gold)', border: '1px solid var(--border)', fontSize: 17 }}>
+            ☰
+          </button>
         </div>
       </header>
 

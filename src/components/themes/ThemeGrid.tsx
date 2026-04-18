@@ -58,13 +58,11 @@ export default function ThemeGrid({
             <p className="text-xs truncate ml-2 flex-1 min-w-0" style={{ color: '#999' }}>{branch.name}</p>
           )}
           <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
-            {(hasInfo || branch?.contact_email) && (
-              <button onClick={() => setShowInfo(true)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
-                style={{ background: '#f0f0f0', color: '#444' }}>
-                ☰ Bilgi
-              </button>
-            )}
+            <button onClick={() => setShowInfo(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
+              style={{ background: '#f0f0f0', color: '#444' }}>
+              ☰ Bilgi
+            </button>
           </div>
         </div>
       </header>

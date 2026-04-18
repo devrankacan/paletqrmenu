@@ -33,11 +33,11 @@ export default function ThemeBanner({ menuData, settings, branch }: {
   const getCoverImage = (cat: Category) =>
     cat.cover_url || cat.products.find((p) => p.image_url)?.image_url || '';
 
-  const InfoBtn = () => (hasInfo || branch?.contact_email) ? (
+  const InfoBtn = () => (
     <button onClick={() => setShowInfo(true)}
       className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
       style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 20 }}>☰</button>
-  ) : <div style={{ width: 40 }} />;
+  );
 
   if (activeCat) {
     return (
