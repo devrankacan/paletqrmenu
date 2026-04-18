@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { InfoDrawer, FeedbackModal } from '@/components/themes/BusinessOverlays';
 
 type Product = {
   id: number; name: string; description: string; price: number;
@@ -14,13 +15,16 @@ type Category = {
 
 type Settings = Record<string, string>;
 
-type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string; cover_url?: string };
+type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string; cover_url?: string; instagram?: string; contact_email?: string };
 
 export default function MenuClient({ menuData, settings, branch }: { menuData: Category[]; settings: Settings; branch?: BranchInfo }) {
   const [activeId, setActiveId] = useState<number>(menuData[0]?.id ?? 0);
   const [scrolled, setScrolled] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const sectionRefs = useRef<Record<number, HTMLElement | null>>({});
   const navRef = useRef<HTMLDivElement>(null);
+  const hasInfo = branch && (branch.address || branch.working_hours || branch.wifi_password || branch.instagram || branch.phone);
   const name = settings.restaurant_name || 'Palet';
   const subtitle = settings.restaurant_subtitle || 'Lezzet Sanatı';
   const currency = settings.currency || '₺';
@@ -71,6 +75,8 @@ export default function MenuClient({ menuData, settings, branch }: { menuData: C
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
+      {showInfo && <InfoDrawer branch={branch ?? {}} onClose={() => setShowInfo(false)} />}
+      {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
       {/* ─── HEADER ─── */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 header-blur transition-all duration-300 ${
@@ -108,11 +114,23 @@ export default function MenuClient({ menuData, settings, branch }: { menuData: C
             </div>
           )}
           {scrolled && (
-            <div className="flex items-center gap-2">
-              <span style={{ color: 'var(--gold)', fontSize: 14 }}>✦</span>
-              <span className="font-bold tracking-widest uppercase" style={{ color: 'var(--text-primary)', fontSize: 16 }}>
-                {name}
-              </span>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <span style={{ color: 'var(--gold)', fontSize: 14 }}>✦</span>
+                <span className="font-bold tracking-widest uppercase" style={{ color: 'var(--text-primary)', fontSize: 16 }}>{name}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {hasInfo && (
+                  <button onClick={() => setShowInfo(true)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ background: 'var(--surface)', color: 'var(--gold)', fontSize: 16, border: '1px solid var(--border)' }}>☰</button>
+                )}
+                <button onClick={() => setShowFeedback(true)}
+                  className="flex items-center gap-1 px-3 h-8 rounded-lg text-xs font-semibold"
+                  style={{ background: 'rgba(201,169,110,0.1)', color: 'var(--gold)', border: '1px solid rgba(201,169,110,0.25)' }}>
+                  ✉ <span className="hidden sm:inline">Geri Bildirim</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

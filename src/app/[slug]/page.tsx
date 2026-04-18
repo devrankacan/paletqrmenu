@@ -6,7 +6,7 @@ import ThemeGrid from '@/components/themes/ThemeGrid';
 
 export const dynamic = 'force-dynamic';
 
-type Branch = { id: number; name: string; slug: string; address: string; phone: string; working_hours: string; wifi_password: string; logo_url: string; cover_url: string; theme: string };
+type Branch = { id: number; name: string; slug: string; address: string; phone: string; working_hours: string; wifi_password: string; logo_url: string; cover_url: string; theme: string; instagram: string; contact_email: string };
 
 export default async function BranchMenuPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

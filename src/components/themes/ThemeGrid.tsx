@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { InfoDrawer, FeedbackModal } from './BusinessOverlays';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
-type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string; cover_url?: string };
+type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string; cover_url?: string; instagram?: string; contact_email?: string };
 
 export default function ThemeGrid({
   menuData, settings, branch,
@@ -12,9 +13,12 @@ export default function ThemeGrid({
   menuData: Category[]; settings: Record<string, string>; branch?: BranchInfo;
 }) {
   const [activeCatId, setActiveCatId] = useState<number | 'all'>('all');
+  const [showInfo, setShowInfo] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const name = settings.restaurant_name || 'Restoran';
   const currency = settings.currency || '₺';
   const accent = '#E53E3E';
+  const hasInfo = branch && (branch.address || branch.working_hours || branch.wifi_password || branch.instagram || branch.phone);
 
   const allProducts = menuData.flatMap((c) => c.products.map((p) => ({ ...p, categoryName: c.name })));
   const displayed = activeCatId === 'all'
@@ -23,6 +27,8 @@ export default function ThemeGrid({
 
   return (
     <div style={{ background: '#f5f5f7', minHeight: '100vh' }}>
+      {showInfo && <InfoDrawer branch={branch ?? {}} onClose={() => setShowInfo(false)} />}
+      {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
       {/* Header */}
       <header style={{ background: '#fff', borderBottom: '1px solid #ebebeb' }}>
         <div className="flex items-center gap-3 px-4 py-3">
@@ -46,17 +52,31 @@ export default function ThemeGrid({
           )}
         </div>
 
-        {/* Info bar */}
-        {(branch?.working_hours || branch?.phone) && (
-          <div className="flex gap-4 px-4 pb-3">
-            {branch.working_hours && (
+        {/* Info bar + action buttons */}
+        <div className="flex items-center justify-between px-4 pb-3">
+          <div className="flex gap-3">
+            {branch?.working_hours && (
               <span className="text-xs flex items-center gap-1" style={{ color: '#666' }}>🕐 {branch.working_hours}</span>
             )}
-            {branch.phone && (
+            {branch?.phone && (
               <span className="text-xs flex items-center gap-1" style={{ color: '#666' }}>📞 {branch.phone}</span>
             )}
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            {hasInfo && (
+              <button onClick={() => setShowInfo(true)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
+                style={{ background: '#f0f0f0', color: '#444' }}>
+                ☰ Bilgi
+              </button>
+            )}
+            <button onClick={() => setShowFeedback(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
+              style={{ background: '#fff0f0', color: '#E53E3E', border: '1px solid #ffd5d5' }}>
+              ✉ Geri Bildirim
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* Cover image */}
