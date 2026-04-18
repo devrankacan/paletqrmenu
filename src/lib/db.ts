@@ -64,12 +64,6 @@ export function initDb() {
     db.exec(`ALTER TABLE branches ADD COLUMN cover_url TEXT DEFAULT ''`);
   }
 
-  // Migration: add cover_url to categories if missing
-  const freshCatCols = (db.prepare('PRAGMA table_info(categories)').all() as Array<{ name: string }>).map((c) => c.name);
-  if (freshCatCols.length > 0 && !freshCatCols.includes('cover_url')) {
-    db.exec(`ALTER TABLE categories ADD COLUMN cover_url TEXT DEFAULT ''`);
-  }
-
   // Migration: recreate categories without UNIQUE slug if no products exist
   const catCols = (db.prepare('PRAGMA table_info(categories)').all() as Array<{ name: string }>).map((c) => c.name);
   const hasBranchId = catCols.includes('branch_id');
@@ -91,6 +85,7 @@ export function initDb() {
         slug TEXT NOT NULL,
         icon TEXT DEFAULT '🍽️',
         sort_order INTEGER DEFAULT 0,
+        cover_url TEXT DEFAULT '',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -98,6 +93,12 @@ export function initDb() {
     if (productCount > 0) {
       db.exec('ALTER TABLE categories ADD COLUMN branch_id INTEGER REFERENCES branches(id) ON DELETE CASCADE');
     }
+  }
+
+  // Migration: add cover_url to existing categories table if missing
+  const catColsNow = (db.prepare('PRAGMA table_info(categories)').all() as Array<{ name: string }>).map((c) => c.name);
+  if (catColsNow.length > 0 && !catColsNow.includes('cover_url')) {
+    db.exec(`ALTER TABLE categories ADD COLUMN cover_url TEXT DEFAULT ''`);
   }
 
   db.exec(`
