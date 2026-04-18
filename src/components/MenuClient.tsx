@@ -132,13 +132,6 @@ export default function MenuClient({ menuData, settings, branch }: {
         </div>
       </div>
 
-      {/* ─── CATEGORY COVER BANNER ─── */}
-      {activeCat?.cover_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={activeCat.cover_url} alt={activeCat.name}
-          style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
-      )}
-
       {/* ─── PRODUCTS ─── */}
       <main className="max-w-2xl mx-auto px-4 pb-24 pt-5">
         {!activeCat || activeCat.products.length === 0 ? (

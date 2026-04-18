@@ -116,13 +116,6 @@ export default function ThemeGrid({
         </div>
       </div>
 
-      {/* Selected category cover banner */}
-      {activeCat?.cover_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={activeCat.cover_url} alt={activeCat.name}
-          style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
-      )}
-
       {/* Product grid */}
       <div className="px-3 py-3 pb-10">
         {displayed.length === 0 ? (
