@@ -80,13 +80,12 @@ export default function ThemeGrid({
           <button
             key={c.id}
             onClick={() => setActiveCatId(c.id)}
-            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all"
+            className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all"
             style={{
               background: activeCatId === c.id ? accent : '#f0f0f0',
               color: activeCatId === c.id ? '#fff' : '#555',
             }}>
-            <span>{c.icon}</span>
-            <span>{c.name}</span>
+            {c.name}
           </button>
         ))}
       </div>

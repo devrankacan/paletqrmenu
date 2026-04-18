@@ -64,6 +64,12 @@ export function initDb() {
     db.exec(`ALTER TABLE branches ADD COLUMN cover_url TEXT DEFAULT ''`);
   }
 
+  // Migration: add cover_url to categories if missing
+  const freshCatCols = (db.prepare('PRAGMA table_info(categories)').all() as Array<{ name: string }>).map((c) => c.name);
+  if (freshCatCols.length > 0 && !freshCatCols.includes('cover_url')) {
+    db.exec(`ALTER TABLE categories ADD COLUMN cover_url TEXT DEFAULT ''`);
+  }
+
   // Migration: recreate categories without UNIQUE slug if no products exist
   const catCols = (db.prepare('PRAGMA table_info(categories)').all() as Array<{ name: string }>).map((c) => c.name);
   const hasBranchId = catCols.includes('branch_id');
@@ -174,16 +180,16 @@ export function getCategoryBySlug(slug: string) {
 }
 
 export function createCategory(data: {
-  branch_id: number; name: string; slug: string; icon?: string; sort_order?: number;
+  branch_id: number; name: string; slug: string; icon?: string; sort_order?: number; cover_url?: string;
 }) {
   const result = getDb().prepare(`
-    INSERT INTO categories (branch_id, name, slug, icon, sort_order)
-    VALUES (@branch_id, @name, @slug, @icon, @sort_order)
-  `).run({ icon: '🍽️', sort_order: 0, ...data });
+    INSERT INTO categories (branch_id, name, slug, icon, sort_order, cover_url)
+    VALUES (@branch_id, @name, @slug, @icon, @sort_order, @cover_url)
+  `).run({ icon: '🍽️', sort_order: 0, cover_url: '', ...data });
   return result.lastInsertRowid;
 }
 
-export function updateCategory(id: number, data: Partial<{ name: string; icon: string; sort_order: number }>) {
+export function updateCategory(id: number, data: Partial<{ name: string; icon: string; sort_order: number; cover_url: string }>) {
   const fields = Object.keys(data).map((k) => `${k} = @${k}`).join(', ');
   getDb().prepare(`UPDATE categories SET ${fields} WHERE id = @id`).run({ ...data, id });
 }

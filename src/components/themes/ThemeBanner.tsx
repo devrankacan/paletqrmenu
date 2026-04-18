@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
-type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[] };
+type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
 type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string; cover_url?: string };
 
 const GRADIENTS = [
@@ -25,7 +25,7 @@ export default function ThemeBanner({
   const currency = settings.currency || '₺';
 
   const getCoverImage = (cat: Category) =>
-    cat.products.find((p) => p.image_url)?.image_url || '';
+    cat.cover_url || cat.products.find((p) => p.image_url)?.image_url || '';
 
   if (activeCat) {
     return (
@@ -38,7 +38,6 @@ export default function ThemeBanner({
             style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 18 }}>
             ←
           </button>
-          <span className="text-2xl">{activeCat.icon}</span>
           <h2 className="font-bold uppercase tracking-wider flex-1" style={{ color: '#fff', fontSize: 16 }}>
             {activeCat.name}
           </h2>
@@ -146,7 +145,6 @@ export default function ThemeBanner({
                 )}
                 <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.82) 45%, rgba(0,0,0,0.25))' }} />
                 <div className="relative flex items-center h-full px-5 gap-3">
-                  <span style={{ fontSize: 28 }}>{cat.icon}</span>
                   <div>
                     <p className="font-black uppercase tracking-widest" style={{ color: '#fff', fontSize: 18, letterSpacing: '0.12em' }}>{cat.name}</p>
                     <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{cat.products.length} ürün</p>

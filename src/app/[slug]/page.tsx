@@ -17,7 +17,7 @@ export default async function BranchMenuPage({ params }: { params: Promise<{ slu
 
   const settings = getSettings();
   const categories = getCategoriesByBranch(branch.id) as Array<{
-    id: number; name: string; slug: string; icon: string; sort_order: number;
+    id: number; name: string; slug: string; icon: string; sort_order: number; cover_url: string;
   }>;
 
   const menuData = categories.map((cat) => ({

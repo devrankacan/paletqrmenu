@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiUrl } from '@/lib/api';
 
 type Branch = { id: number; name: string; slug: string; address: string; phone: string; working_hours: string; wifi_password: string };
-type Category = { id: number; name: string; slug: string; icon: string };
+type Category = { id: number; name: string; slug: string; icon: string; cover_url?: string };
 type Product = {
   id: number; name: string; description: string; price: number;
   image_url: string; is_featured: number; is_available: number;
@@ -58,7 +58,7 @@ export default function AdminDashboard({
   const [filterCat, setFilterCat] = useState<number | 'all'>('all');
 
   // Category form
-  const [catForm, setCatForm] = useState({ name: '', icon: '🍽️' });
+  const [catForm, setCatForm] = useState({ name: '', cover_url: '' });
   const [showAddCat, setShowAddCat] = useState(false);
 
   // Settings form
@@ -142,12 +142,12 @@ export default function AdminDashboard({
     if (!selectedBranch) return;
     const res = await fetch(apiUrl('/api/categories'), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...catForm, branch_id: selectedBranch.id }),
+      body: JSON.stringify({ name: catForm.name, cover_url: catForm.cover_url, branch_id: selectedBranch.id }),
     });
     const data = await res.json();
     if (res.ok) {
-      setCategories([...categories, { id: data.id, name: catForm.name, slug: '', icon: catForm.icon }]);
-      setCatForm({ name: '', icon: '🍽️' });
+      setCategories([...categories, { id: data.id, name: catForm.name, slug: '', icon: '🍽️', cover_url: catForm.cover_url }]);
+      setCatForm({ name: '', cover_url: '' });
       setShowAddCat(false);
       showMsg('Kategori eklendi ✓');
     }
@@ -218,7 +218,6 @@ export default function AdminDashboard({
   };
 
   const filteredProducts = filterCat === 'all' ? products : products.filter((p) => p.category_id === filterCat);
-  const ICONS = ['🍽️', '☕', '🍵', '🥤', '🍹', '🧃', '🍳', '🥗', '🍲', '🍕', '🍔', '🥩', '🍗', '🍰', '🎂', '🍮', '🍞', '🥐', '🍜', '🌮', '🍱', '🥙', '🍟', '🍫'];
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
@@ -503,16 +502,34 @@ export default function AdminDashboard({
                     <input style={INPUT_STYLE} value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} required placeholder="Kahvaltılıklar" />
                   </div>
                   <div>
-                    <label className="block text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>İkon</label>
-                    <div className="flex flex-wrap gap-2">
-                      {ICONS.map((icon) => (
-                        <button key={icon} type="button" onClick={() => setCatForm({ ...catForm, icon })}
-                          className="w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all"
-                          style={{ background: catForm.icon === icon ? 'rgba(201,169,110,0.25)' : 'var(--surface-2)', border: catForm.icon === icon ? '2px solid var(--gold)' : '2px solid transparent' }}>
-                          {icon}
+                    <label className="block text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>Kapak Görseli</label>
+                    <label className="flex items-center gap-3 cursor-pointer rounded-xl px-4 py-3"
+                      style={{ background: 'var(--surface-2)', border: '1px dashed var(--border)' }}>
+                      <span style={{ color: 'var(--gold)', fontSize: 18 }}>🖼️</span>
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Görsel seç (JPG, PNG — max 5MB)</span>
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const fd = new FormData();
+                          fd.append('file', file);
+                          const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
+                          const data = await res.json();
+                          if (res.ok) setCatForm((f) => ({ ...f, cover_url: data.url }));
+                          else showMsg(data.error || 'Yükleme hatası');
+                        }} />
+                    </label>
+                    {catForm.cover_url && (
+                      <div className="mt-2 flex items-center gap-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={catForm.cover_url} alt="Kapak" className="rounded-xl object-cover flex-shrink-0" style={{ width: 80, height: 50 }} />
+                        <button type="button" className="text-xs px-3 py-1.5 rounded-lg"
+                          style={{ background: 'var(--surface-2)', color: '#ff6b6b', border: '1px solid var(--border)' }}
+                          onClick={() => setCatForm((f) => ({ ...f, cover_url: '' }))}>
+                          Kaldır
                         </button>
-                      ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button type="submit" className="w-full mt-4 py-2.5 rounded-xl text-sm font-semibold"
@@ -528,10 +545,40 @@ export default function AdminDashboard({
               </div>
             ) : (
               categories.map((c) => (
-                <div key={c.id} className="flex items-center gap-3 rounded-2xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                  <span className="text-2xl">{c.icon}</span>
+                <div key={c.id} className="flex items-center gap-3 rounded-2xl p-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                  {c.cover_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.cover_url} alt="" className="rounded-xl object-cover flex-shrink-0" style={{ width: 48, height: 48 }} />
+                  ) : (
+                    <div className="rounded-xl flex-shrink-0 flex items-center justify-center"
+                      style={{ width: 48, height: 48, background: 'var(--surface-2)', color: 'var(--text-secondary)', fontSize: 20 }}>🖼️</div>
+                  )}
                   <span className="flex-1 font-medium" style={{ color: 'var(--text-primary)' }}>{c.name}</span>
-                  <button onClick={() => handleDeleteCategory(c.id)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
+                  <label className="cursor-pointer w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'var(--surface-2)', color: 'var(--gold)' }} title="Kapak görseli değiştir">
+                    📷
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        e.target.value = '';
+                        const fd = new FormData();
+                        fd.append('file', file);
+                        const uploadRes = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
+                        const uploadData = await uploadRes.json();
+                        if (uploadRes.ok) {
+                          await fetch(apiUrl(`/api/categories/${c.id}`), {
+                            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ cover_url: uploadData.url }),
+                          });
+                          setCategories(categories.map((cat) => cat.id === c.id ? { ...cat, cover_url: uploadData.url } : cat));
+                          showMsg('Kapak güncellendi ✓');
+                        } else {
+                          showMsg(uploadData.error || 'Yükleme hatası');
+                        }
+                      }} />
+                  </label>
+                  <button onClick={() => handleDeleteCategory(c.id)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center flex-shrink-0"
                     style={{ background: 'var(--surface-2)', color: '#ff6b6b' }}>🗑</button>
                 </div>
               ))

@@ -166,8 +166,7 @@ export default function MenuClient({ menuData, settings, branch }: { menuData: C
                 borderBottomColor: activeId === cat.id ? 'var(--gold)' : 'transparent',
               }}
             >
-              <span>{cat.icon}</span>
-              <span>{cat.name}</span>
+              {cat.name}
             </button>
           ))}
         </div>
