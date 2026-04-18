@@ -63,6 +63,12 @@ export function initDb() {
   if (!branchCols.includes('cover_url')) {
     db.exec(`ALTER TABLE branches ADD COLUMN cover_url TEXT DEFAULT ''`);
   }
+  if (!branchCols.includes('instagram')) {
+    db.exec(`ALTER TABLE branches ADD COLUMN instagram TEXT DEFAULT ''`);
+  }
+  if (!branchCols.includes('contact_email')) {
+    db.exec(`ALTER TABLE branches ADD COLUMN contact_email TEXT DEFAULT ''`);
+  }
 
   // Migration: recreate categories without UNIQUE slug if no products exist
   const catCols = (db.prepare('PRAGMA table_info(categories)').all() as Array<{ name: string }>).map((c) => c.name);
@@ -155,6 +161,7 @@ export function updateBranch(id: number, data: Partial<{
   name: string; slug: string; address: string; phone: string;
   working_hours: string; wifi_password: string; is_active: number;
   logo_url: string; cover_url: string; theme: string;
+  instagram: string; contact_email: string;
 }>) {
   const fields = Object.keys(data).map((k) => `${k} = @${k}`).join(', ');
   getDb().prepare(`UPDATE branches SET ${fields} WHERE id = @id`).run({ ...data, id });

@@ -48,7 +48,7 @@ export default function AdminDashboard({
   // Branch form
   const [branchForm, setBranchForm] = useState({ name: '', slug: '' });
   const [editBranch, setEditBranch] = useState<Branch | null>(null);
-  const [branchSettingsForm, setBranchSettingsForm] = useState({ name: '', address: '', phone: '', working_hours: '', wifi_password: '', logo_url: '', cover_url: '', theme: 'classic' });
+  const [branchSettingsForm, setBranchSettingsForm] = useState({ name: '', address: '', phone: '', working_hours: '', wifi_password: '', logo_url: '', cover_url: '', theme: 'classic', instagram: '', contact_email: '' });
 
   // Product form
   const emptyProduct = { name: '', description: '', price: '', image_url: '', category_id: '', is_featured: false };
@@ -87,8 +87,8 @@ export default function AdminDashboard({
 
   const selectBranch = (b: Branch) => {
     setSelectedBranch(b);
-    const bb = b as Branch & { logo_url?: string; cover_url?: string; theme?: string };
-    setBranchSettingsForm({ name: b.name, address: b.address || '', phone: b.phone || '', working_hours: b.working_hours || '', wifi_password: b.wifi_password || '', logo_url: bb.logo_url || '', cover_url: bb.cover_url || '', theme: bb.theme || 'classic' });
+    const bb = b as Branch & { logo_url?: string; cover_url?: string; theme?: string; instagram?: string; contact_email?: string };
+    setBranchSettingsForm({ name: b.name, address: b.address || '', phone: b.phone || '', working_hours: b.working_hours || '', wifi_password: b.wifi_password || '', logo_url: bb.logo_url || '', cover_url: bb.cover_url || '', theme: bb.theme || 'classic', instagram: bb.instagram || '', contact_email: bb.contact_email || '' });
     setActiveTab('products');
   };
 
@@ -598,6 +598,8 @@ export default function AdminDashboard({
                   { key: 'phone', label: 'Telefon', placeholder: '0212 000 00 00' },
                   { key: 'working_hours', label: 'Çalışma Saatleri', placeholder: '09:00 - 22:00' },
                   { key: 'wifi_password', label: 'Wifi Şifresi', placeholder: 'wifi123' },
+                  { key: 'instagram', label: 'Instagram', placeholder: '@hesap_adi' },
+                  { key: 'contact_email', label: 'İletişim E-postası', placeholder: 'info@restoran.com' },
                 ].map(({ key, label, placeholder }) => (
                   <div key={key}>
                     <label className="block text-xs mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>{label}</label>
