@@ -26,7 +26,7 @@ export function InfoDrawer({
   const [fbSent, setFbSent] = useState(false);
 
   const c = isDark ? {
-    bg: 'rgba(14,14,14,0.97)',
+    bg: 'rgba(14,14,14,0.55)',
     text: '#ffffff',
     textSub: 'rgba(255,255,255,0.55)',
     textMuted: 'rgba(255,255,255,0.35)',
@@ -39,7 +39,7 @@ export function InfoDrawer({
     copyColor: 'rgba(255,255,255,0.6)',
     copyBorder: 'rgba(255,255,255,0.12)',
   } : {
-    bg: 'rgba(250,250,252,0.97)',
+    bg: 'rgba(250,250,252,0.55)',
     text: '#111111',
     textSub: 'rgba(0,0,0,0.45)',
     textMuted: 'rgba(0,0,0,0.3)',
@@ -105,13 +105,11 @@ export function InfoDrawer({
       <div className="fixed top-0 left-0 h-full flex flex-col overflow-y-auto"
         style={{ width: 'min(320px, 85vw)', background: c.bg, backdropFilter: 'blur(20px)', zIndex: 50 }}>
 
-        {/* Gradient header */}
-        <div className="flex items-center justify-between flex-shrink-0 px-5 py-4"
-          style={{ background: 'linear-gradient(135deg, #1e3a5f, #0f2744)', minHeight: 62 }}>
-          <span className="font-bold" style={{ color: '#fff', fontSize: 18 }}>Hoşgeldiniz!</span>
+        {/* Close button */}
+        <div className="flex items-center justify-end flex-shrink-0 px-4 pt-4 pb-2">
           <button onClick={onClose}
             className="flex items-center justify-center rounded-full"
-            style={{ width: 32, height: 32, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 16 }}>
+            style={{ width: 32, height: 32, background: c.iconBg, color: c.text, fontSize: 16 }}>
             ✕
           </button>
         </div>
