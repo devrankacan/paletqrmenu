@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { InfoDrawer } from './BusinessOverlays';
+import { InfoDrawer, SearchOverlay } from './BusinessOverlays';
+import translations, { type Lang, nextLang } from '@/lib/translations';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
@@ -23,18 +24,22 @@ export default function ThemeGrid({
 }) {
   const [activeCatId, setActiveCatId] = useState<number>(() => menuData[0]?.id ?? 0);
   const [showInfo, setShowInfo] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [lang, setLang] = useState<Lang>('tr');
 
   const name = settings.restaurant_name || 'Restoran';
   const currency = settings.currency || '₺';
   const accent = '#E53E3E';
-  const hasInfo = branch && (branch.address || branch.working_hours || branch.wifi_password || branch.instagram || branch.phone);
+  const tr = translations[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
 
   const activeCat = menuData.find((c) => c.id === activeCatId);
   const displayed = activeCat?.products.map((p) => ({ ...p, categoryName: activeCat.name })) ?? [];
 
   return (
-    <div style={{ background: '#f5f5f7', minHeight: '100vh' }}>
-      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={false} />}
+    <div dir={dir} style={{ background: '#f5f5f7', minHeight: '100vh' }}>
+      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={false} lang={lang} />}
+      {showSearch && <SearchOverlay menuData={menuData} currency={currency} lang={lang} isDark={false} onClose={() => setShowSearch(false)} />}
 
       {/* Header */}
       <header style={{ background: '#fff', borderBottom: '1px solid #ebebeb' }}>
@@ -58,10 +63,20 @@ export default function ThemeGrid({
             <p className="text-xs truncate ml-2 flex-1 min-w-0" style={{ color: '#999' }}>{branch.name}</p>
           )}
           <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+            <button onClick={() => setShowSearch(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
+              style={{ background: '#f0f0f0', color: '#444' }}>
+              🔍
+            </button>
+            <button onClick={() => setLang(nextLang(lang))}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold"
+              style={{ background: '#f0f0f0', color: '#444' }}>
+              {lang.toUpperCase()}
+            </button>
             <button onClick={() => setShowInfo(true)}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
               style={{ background: '#f0f0f0', color: '#444' }}>
-              ☰ Bilgi
+              ☰ {tr.info}
             </button>
           </div>
         </div>
@@ -73,7 +88,7 @@ export default function ThemeGrid({
         <img src={branch.cover_url} alt="" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
       )}
 
-      {/* Visual category selector — horizontal scroll */}
+      {/* Visual category selector */}
       <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', background: '#fff', borderBottom: '2px solid #ebebeb' }}>
         <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
           {menuData.map((c, idx) => {
@@ -110,7 +125,7 @@ export default function ThemeGrid({
       {/* Product grid */}
       <div className="px-3 py-3 pb-10">
         {displayed.length === 0 ? (
-          <div className="text-center py-20" style={{ color: '#aaa', fontSize: 14 }}>Bu kategoride ürün yok</div>
+          <div className="text-center py-20" style={{ color: '#aaa', fontSize: 14 }}>{tr.noCategoryProducts}</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {displayed.map((p) => (
@@ -126,7 +141,7 @@ export default function ThemeGrid({
                 <div style={{ padding: '10px 10px 12px' }}>
                   {p.is_featured === 1 && (
                     <span className="text-xs px-1.5 py-0.5 rounded-full inline-block mb-1"
-                      style={{ background: '#fff5e0', color: '#d97706', fontSize: 9, fontWeight: 700 }}>★ ÖNE ÇIKAN</span>
+                      style={{ background: '#fff5e0', color: '#d97706', fontSize: 9, fontWeight: 700 }}>★ {tr.featured}</span>
                   )}
                   <p className="font-semibold leading-tight" style={{ color: '#1a1a1a', fontSize: 13 }}>{p.name}</p>
                   {p.description && (
@@ -148,7 +163,7 @@ export default function ThemeGrid({
           <p className="font-bold" style={{ color: '#1a1a1a', fontSize: 15 }}>{name}</p>
           <div className="flex flex-col gap-1 mt-2">
             {branch.address && <p className="text-xs" style={{ color: '#999' }}>📍 {branch.address}</p>}
-            {branch.wifi_password && <p className="text-xs" style={{ color: '#999' }}>📶 Wifi: {branch.wifi_password}</p>}
+            {branch.wifi_password && <p className="text-xs" style={{ color: '#999' }}>📶 {tr.wifi}: {branch.wifi_password}</p>}
           </div>
         </footer>
       )}

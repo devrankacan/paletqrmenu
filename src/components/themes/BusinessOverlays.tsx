@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import translations, { type Lang } from '@/lib/translations';
 
 export type OverlayBranch = {
   address?: string; phone?: string; working_hours?: string;
@@ -15,15 +16,17 @@ const overlayStyle: React.CSSProperties = {
 
 /* ── Info Drawer ─────────────────────────────────────────── */
 export function InfoDrawer({
-  branch, onClose, isDark = true,
+  branch, onClose, isDark = true, lang = 'tr',
 }: {
-  branch: OverlayBranch; onClose: () => void; isDark?: boolean;
+  branch: OverlayBranch; onClose: () => void; isDark?: boolean; lang?: Lang;
 }) {
   const [wifiCopied, setWifiCopied] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [fbEmail, setFbEmail] = useState('');
   const [fbMsg, setFbMsg] = useState('');
   const [fbSent, setFbSent] = useState(false);
+  const tr = translations[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
 
   const c = isDark ? {
     bg: 'rgba(14,14,14,0.55)',
@@ -31,7 +34,6 @@ export function InfoDrawer({
     textSub: 'rgba(255,255,255,0.55)',
     textMuted: 'rgba(255,255,255,0.35)',
     iconBg: 'rgba(255,255,255,0.1)',
-    iconBgHover: 'rgba(255,255,255,0.15)',
     border: 'rgba(255,255,255,0.08)',
     inputBg: 'rgba(255,255,255,0.06)',
     inputBorder: 'rgba(255,255,255,0.12)',
@@ -44,7 +46,6 @@ export function InfoDrawer({
     textSub: 'rgba(0,0,0,0.45)',
     textMuted: 'rgba(0,0,0,0.3)',
     iconBg: 'rgba(0,0,0,0.07)',
-    iconBgHover: 'rgba(0,0,0,0.1)',
     border: 'rgba(0,0,0,0.08)',
     inputBg: 'rgba(0,0,0,0.04)',
     inputBorder: 'rgba(0,0,0,0.1)',
@@ -102,7 +103,7 @@ export function InfoDrawer({
   return (
     <>
       <div style={overlayStyle} onClick={onClose} />
-      <div className="fixed top-0 left-0 h-full flex flex-col overflow-y-auto"
+      <div dir={dir} className="fixed top-0 left-0 h-full flex flex-col overflow-y-auto"
         style={{ width: 'min(320px, 85vw)', background: c.bg, backdropFilter: 'blur(20px)', zIndex: 50 }}>
 
         {/* Close button */}
@@ -132,7 +133,7 @@ export function InfoDrawer({
         {/* Business info */}
         {hasBizInfo && (
           <div className="px-5 py-5" style={{ borderBottom: `1px solid ${c.border}` }}>
-            <SectionLabel>İşletme Bilgileri</SectionLabel>
+            <SectionLabel>{tr.businessInfo}</SectionLabel>
             <div className="flex flex-col gap-4">
               {branch.address && (
                 <a href={`https://maps.google.com/?q=${encodeURIComponent(branch.address)}`}
@@ -172,7 +173,7 @@ export function InfoDrawer({
                         color: wifiCopied ? '#22c55e' : c.copyColor,
                         border: `1px solid ${wifiCopied ? 'rgba(74,222,128,0.3)' : c.copyBorder}`,
                       }}>
-                      {wifiCopied ? '✓' : 'Kopyala'}
+                      {wifiCopied ? tr.copied : tr.copy}
                     </button>
                   </div>
                 </div>
@@ -184,7 +185,7 @@ export function InfoDrawer({
         {/* Social media */}
         {branch.instagram && (
           <div className="px-5 py-5" style={{ borderBottom: `1px solid ${c.border}` }}>
-            <SectionLabel>Sosyal Medya</SectionLabel>
+            <SectionLabel>{tr.socialMedia}</SectionLabel>
             <div className="flex flex-col gap-3">
               <a href={instaUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3">
                 <IconCircle>📸</IconCircle>
@@ -205,25 +206,25 @@ export function InfoDrawer({
               style={{ width: 42, height: 42, borderRadius: '50%', background: 'rgba(201,169,110,0.2)', fontSize: 18 }}>
               ✉️
             </div>
-            <span className="font-semibold text-sm" style={{ color: c.text }}>Geri Bildirim Gönder</span>
+            <span className="font-semibold text-sm" style={{ color: c.text }}>{tr.feedback}</span>
             <span className="ml-auto" style={{ color: c.textMuted, fontSize: 13 }}>{showFeedback ? '▲' : '▼'}</span>
           </button>
 
           {showFeedback && (
             <div className="flex flex-col gap-3 mt-3">
               {fbSent ? (
-                <p className="text-center text-sm font-semibold py-4" style={{ color: '#22c55e' }}>Teşekkürler! ✓</p>
+                <p className="text-center text-sm font-semibold py-4" style={{ color: '#22c55e' }}>{tr.thanks}</p>
               ) : (
                 <>
                   <div>
-                    <label className="block mb-1" style={{ color: c.textSub, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>E-posta (isteğe bağlı)</label>
+                    <label className="block mb-1" style={{ color: c.textSub, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{tr.feedbackEmail}</label>
                     <input type="email" value={fbEmail} onChange={(e) => setFbEmail(e.target.value)}
                       placeholder="ornek@email.com" style={inputStyle} />
                   </div>
                   <div>
-                    <label className="block mb-1" style={{ color: c.textSub, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Mesajınız *</label>
+                    <label className="block mb-1" style={{ color: c.textSub, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{tr.feedbackMessage}</label>
                     <textarea value={fbMsg} onChange={(e) => setFbMsg(e.target.value)}
-                      placeholder="Görüş ve önerilerinizi yazın..." rows={4}
+                      placeholder={tr.feedbackPlaceholder} rows={4}
                       style={{ ...inputStyle, resize: 'none' }} />
                   </div>
                   <button onClick={submitFeedback} disabled={!fbMsg.trim()}
@@ -233,7 +234,7 @@ export function InfoDrawer({
                       color: fbMsg.trim() ? '#0d0d0d' : c.textMuted,
                       cursor: fbMsg.trim() ? 'pointer' : 'default',
                     }}>
-                    Gönder
+                    {tr.send}
                   </button>
                 </>
               )}
@@ -243,6 +244,130 @@ export function InfoDrawer({
 
       </div>
     </>
+  );
+}
+
+/* ── Search Overlay ──────────────────────────────────────── */
+type SearchProduct = {
+  id: number; name: string; description: string; price: number;
+  image_url: string; is_featured: number; categoryName: string;
+};
+
+type SearchCategory = {
+  id: number; name: string;
+  products: { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number }[];
+};
+
+export function SearchOverlay({
+  menuData, currency, lang, isDark = true, onClose,
+}: {
+  menuData: SearchCategory[];
+  currency: string;
+  lang: Lang;
+  isDark?: boolean;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const tr = translations[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const c = isDark ? {
+    bg: 'rgba(14,14,14,0.97)',
+    text: '#fff',
+    textSub: 'rgba(255,255,255,0.5)',
+    border: 'rgba(255,255,255,0.09)',
+    itemBg: 'rgba(255,255,255,0.05)',
+    inputColor: '#fff',
+    accent: '#C9A96E',
+  } : {
+    bg: 'rgba(250,250,252,0.97)',
+    text: '#111',
+    textSub: 'rgba(0,0,0,0.4)',
+    border: 'rgba(0,0,0,0.08)',
+    itemBg: 'rgba(0,0,0,0.03)',
+    inputColor: '#111',
+    accent: '#E53E3E',
+  };
+
+  const results: SearchProduct[] = query.trim().length > 0
+    ? menuData.flatMap((cat) =>
+        cat.products
+          .filter((p) =>
+            p.name.toLowerCase().includes(query.toLowerCase()) ||
+            (p.description && p.description.toLowerCase().includes(query.toLowerCase()))
+          )
+          .map((p) => ({ ...p, categoryName: cat.name }))
+      )
+    : [];
+
+  return (
+    <div dir={dir} className="fixed inset-0 flex flex-col"
+      style={{ background: c.bg, backdropFilter: 'blur(20px)', zIndex: 100 }}>
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0"
+        style={{ borderBottom: `1px solid ${c.border}` }}>
+        <span style={{ color: c.textSub, fontSize: 20 }}>🔍</span>
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={tr.searchPlaceholder}
+          style={{
+            flex: 1, background: 'none', border: 'none', outline: 'none',
+            color: c.inputColor, fontSize: 16, caretColor: c.accent,
+          }}
+        />
+        <button onClick={onClose}
+          style={{ color: c.textSub, fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
+          ✕
+        </button>
+      </div>
+
+      {/* Results */}
+      <div className="flex-1 overflow-y-auto px-3 py-3">
+        {query.trim() && results.length === 0 && (
+          <p className="text-center py-16" style={{ color: c.textSub, fontSize: 14 }}>{tr.noResults}</p>
+        )}
+        {!query.trim() && (
+          <p className="text-center py-16" style={{ color: c.textSub, fontSize: 13 }}>
+            {tr.searchPlaceholder}
+          </p>
+        )}
+        <div className="flex flex-col gap-2">
+          {results.map((p) => (
+            <div key={p.id} className="flex rounded-2xl overflow-hidden"
+              style={{ background: c.itemBg, border: `1px solid ${c.border}` }}>
+              {p.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.image_url} alt={p.name}
+                  style={{ width: 80, height: 80, objectFit: 'cover', flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 80, height: 80, flexShrink: 0, background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
+              )}
+              <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
+                <div>
+                  <p style={{ color: c.textSub, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
+                    {p.categoryName}
+                  </p>
+                  <p className="font-semibold leading-snug" style={{ color: c.text, fontSize: 14 }}>{p.name}</p>
+                  {p.description && (
+                    <p className="line-clamp-1" style={{ color: c.textSub, fontSize: 12, marginTop: 2 }}>{p.description}</p>
+                  )}
+                </div>
+                <p className="font-bold" style={{ color: c.accent, fontSize: 15, marginTop: 4 }}>
+                  {currency}{p.price % 1 === 0 ? p.price.toFixed(0) : p.price.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 

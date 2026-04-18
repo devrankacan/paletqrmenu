@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { InfoDrawer } from '@/components/themes/BusinessOverlays';
+import { InfoDrawer, SearchOverlay } from '@/components/themes/BusinessOverlays';
+import translations, { type Lang, nextLang } from '@/lib/translations';
 
 type Product = {
   id: number; name: string; description: string; price: number;
@@ -32,22 +33,25 @@ export default function MenuClient({ menuData, settings, branch }: {
 }) {
   const [activeCatId, setActiveCatId] = useState<number>(() => menuData[0]?.id ?? 0);
   const [showInfo, setShowInfo] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [lang, setLang] = useState<Lang>('tr');
 
   const name = settings.restaurant_name || 'Palet';
   const subtitle = settings.restaurant_subtitle || 'Lezzet Sanatı';
   const currency = settings.currency || '₺';
-  const hasInfo = branch && (branch.address || branch.working_hours || branch.wifi_password || branch.instagram || branch.phone);
+  const tr = translations[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const activeCat = menuData.find((c) => c.id === activeCatId);
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} />}
+    <div dir={dir} style={{ background: 'var(--bg)', minHeight: '100vh' }}>
+      {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} lang={lang} />}
+      {showSearch && <SearchOverlay menuData={menuData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
 
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-50"
         style={{ background: 'rgba(13,13,13,0.97)', borderBottom: '1px solid rgba(201,169,110,0.15)' }}>
         <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
-          {/* Logo or name */}
           {branch?.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={branch.logo_url} alt={name} className="object-contain"
@@ -59,12 +63,23 @@ export default function MenuClient({ menuData, settings, branch }: {
                 style={{ color: 'var(--text-primary)', fontSize: 16 }}>{name}</span>
             </div>
           )}
-          {/* Info button — always visible, drawer has feedback even with no branch info */}
-          <button onClick={() => setShowInfo(true)}
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: 'var(--surface)', color: 'var(--gold)', border: '1px solid var(--border)', fontSize: 17 }}>
-            ☰
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowSearch(true)}
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: 'var(--surface)', color: 'var(--gold)', border: '1px solid var(--border)', fontSize: 17 }}>
+              🔍
+            </button>
+            <button onClick={() => setLang(nextLang(lang))}
+              className="h-9 px-2.5 rounded-xl flex items-center justify-center font-bold text-xs"
+              style={{ background: 'var(--surface)', color: 'var(--gold)', border: '1px solid var(--border)', minWidth: 36 }}>
+              {lang.toUpperCase()}
+            </button>
+            <button onClick={() => setShowInfo(true)}
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: 'var(--surface)', color: 'var(--gold)', border: '1px solid var(--border)', fontSize: 17 }}>
+              ☰
+            </button>
+          </div>
         </div>
       </header>
 
@@ -126,12 +141,12 @@ export default function MenuClient({ menuData, settings, branch }: {
         {!activeCat || activeCat.products.length === 0 ? (
           <div className="text-center py-16 rounded-2xl"
             style={{ background: 'var(--surface)', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
-            <p className="text-sm">Henüz ürün eklenmedi</p>
+            <p className="text-sm">{tr.noProducts}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             {activeCat.products.map((product) => (
-              <ProductCard key={product.id} product={product} currency={currency} />
+              <ProductCard key={product.id} product={product} currency={currency} featuredLabel={tr.featured} />
             ))}
           </div>
         )}
@@ -150,7 +165,7 @@ export default function MenuClient({ menuData, settings, branch }: {
             {branch.address && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>📍 {branch.address}</p>}
             {branch.phone && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>📞 {branch.phone}</p>}
             {branch.working_hours && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>🕐 {branch.working_hours}</p>}
-            {branch.wifi_password && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>📶 Wifi: {branch.wifi_password}</p>}
+            {branch.wifi_password && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>📶 {tr.wifi}: {branch.wifi_password}</p>}
           </div>
         )}
       </footer>
@@ -158,7 +173,7 @@ export default function MenuClient({ menuData, settings, branch }: {
   );
 }
 
-function ProductCard({ product, currency }: { product: Product; currency: string }) {
+function ProductCard({ product, currency, featuredLabel }: { product: Product; currency: string; featuredLabel: string }) {
   const hasImage = !!product.image_url?.trim();
   return (
     <div className="rounded-2xl overflow-hidden flex"
@@ -174,7 +189,7 @@ function ProductCard({ product, currency }: { product: Product; currency: string
           {product.is_featured === 1 && (
             <span className="inline-block text-xs font-bold px-2 py-0.5 rounded-full mb-1"
               style={{ background: 'rgba(201,169,110,0.15)', color: 'var(--gold)', border: '1px solid rgba(201,169,110,0.3)', fontSize: 10 }}>
-              ★ ÖNE ÇIKAN
+              ★ {featuredLabel}
             </span>
           )}
           <h3 className="font-semibold leading-snug" style={{ color: 'var(--text-primary)', fontSize: 15 }}>{product.name}</h3>

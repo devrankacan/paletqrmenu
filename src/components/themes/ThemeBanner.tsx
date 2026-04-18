@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { InfoDrawer } from './BusinessOverlays';
+import { InfoDrawer, SearchOverlay } from './BusinessOverlays';
+import translations, { type Lang, nextLang } from '@/lib/translations';
 
 type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
@@ -25,35 +26,49 @@ export default function ThemeBanner({ menuData, settings, branch }: {
 }) {
   const [activeCat, setActiveCat] = useState<Category | null>(null);
   const [showInfo, setShowInfo] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [lang, setLang] = useState<Lang>('tr');
 
   const name = settings.restaurant_name || 'Restoran';
   const currency = settings.currency || '₺';
-  const hasInfo = branch && (branch.address || branch.working_hours || branch.wifi_password || branch.instagram || branch.phone);
+  const tr = translations[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
 
   const getCoverImage = (cat: Category) =>
     cat.cover_url || cat.products.find((p) => p.image_url)?.image_url || '';
 
-  const InfoBtn = () => (
-    <button onClick={() => setShowInfo(true)}
+  const BtnIcon = ({ onClick, children }: { onClick: () => void; children: React.ReactNode }) => (
+    <button onClick={onClick}
       className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-      style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 20 }}>☰</button>
+      style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 18 }}>
+      {children}
+    </button>
+  );
+
+  const LangBtn = () => (
+    <button onClick={() => setLang(nextLang(lang))}
+      className="h-10 px-2.5 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-xs"
+      style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', minWidth: 36 }}>
+      {lang.toUpperCase()}
+    </button>
   );
 
   if (activeCat) {
     return (
-      <div style={{ background: '#0d0d0d', minHeight: '100vh' }}>
-        {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} />}
-        <header className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
+      <div dir={dir} style={{ background: '#0d0d0d', minHeight: '100vh' }}>
+        {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} lang={lang} />}
+        {showSearch && <SearchOverlay menuData={menuData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
+        <header className="sticky top-0 z-30 flex items-center gap-2 px-4 py-3"
           style={{ background: 'rgba(10,10,10,0.97)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <InfoBtn />
-          <button onClick={() => setActiveCat(null)}
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 18 }}>←</button>
+          <BtnIcon onClick={() => setActiveCat(null)}>{tr.back}</BtnIcon>
           <h2 className="font-bold uppercase tracking-wider flex-1 truncate" style={{ color: '#fff', fontSize: 16 }}>{activeCat.name}</h2>
+          <BtnIcon onClick={() => setShowSearch(true)}>🔍</BtnIcon>
+          <LangBtn />
+          <BtnIcon onClick={() => setShowInfo(true)}>☰</BtnIcon>
         </header>
         <div className="flex flex-col gap-3 p-4 pb-24">
           {activeCat.products.length === 0 ? (
-            <div className="text-center py-20" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>Henüz ürün eklenmedi</div>
+            <div className="text-center py-20" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>{tr.noProducts}</div>
           ) : activeCat.products.map((p) => (
             <div key={p.id} className="flex rounded-2xl overflow-hidden"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -64,7 +79,7 @@ export default function ThemeBanner({ menuData, settings, branch }: {
               <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
                 <div>
                   {p.is_featured === 1 && (
-                    <span className="text-xs px-1.5 py-0.5 rounded-full mr-1" style={{ background: 'rgba(201,169,110,0.2)', color: '#C9A96E', fontSize: 9 }}>★</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded-full mr-1" style={{ background: 'rgba(201,169,110,0.2)', color: '#C9A96E', fontSize: 9 }}>★ {tr.featured}</span>
                   )}
                   <p className="font-semibold leading-snug" style={{ color: '#fff', fontSize: 14 }}>{p.name}</p>
                   {p.description && <p className="text-xs mt-0.5 line-clamp-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{p.description}</p>}
@@ -81,10 +96,11 @@ export default function ThemeBanner({ menuData, settings, branch }: {
   }
 
   return (
-    <div style={{ background: '#0d0d0d', minHeight: '100vh' }}>
-      {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} />}
-      <header className="flex items-center gap-3 px-4 py-3" style={{ background: 'rgba(0,0,0,0.6)' }}>
-        <InfoBtn />
+    <div dir={dir} style={{ background: '#0d0d0d', minHeight: '100vh' }}>
+      {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} lang={lang} />}
+      {showSearch && <SearchOverlay menuData={menuData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
+      <header className="flex items-center gap-2 px-4 py-3" style={{ background: 'rgba(0,0,0,0.6)' }}>
+        <BtnIcon onClick={() => setShowInfo(true)}>☰</BtnIcon>
         <div className="flex-1 flex items-center justify-center px-2 min-w-0">
           {branch?.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -96,6 +112,8 @@ export default function ThemeBanner({ menuData, settings, branch }: {
             </div>
           )}
         </div>
+        <LangBtn />
+        <BtnIcon onClick={() => setShowSearch(true)}>🔍</BtnIcon>
       </header>
       {branch?.cover_url && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -103,7 +121,7 @@ export default function ThemeBanner({ menuData, settings, branch }: {
       )}
       <div className="flex flex-col gap-3 px-3 py-3 pb-12">
         {menuData.length === 0 ? (
-          <div className="text-center py-20" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>Henüz kategori eklenmedi</div>
+          <div className="text-center py-20" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>{tr.noCategories}</div>
         ) : menuData.map((cat, idx) => {
           const cover = getCoverImage(cat);
           return (
@@ -119,7 +137,7 @@ export default function ThemeBanner({ menuData, settings, branch }: {
               <div className="relative flex items-center h-full px-5">
                 <div className="flex-1 min-w-0">
                   <p className="font-black uppercase tracking-widest truncate" style={{ color: '#fff', fontSize: 17, letterSpacing: '0.1em' }}>{cat.name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{cat.products.length} ürün</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{cat.products.length} {tr.items}</p>
                 </div>
                 <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 22 }}>›</span>
               </div>
