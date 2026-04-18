@@ -7,28 +7,37 @@ type Product = { id: number; name: string; description: string; price: number; i
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
 type BranchInfo = { name?: string; address?: string; phone?: string; working_hours?: string; wifi_password?: string; logo_url?: string; cover_url?: string; instagram?: string; contact_email?: string };
 
+const CAT_GRADIENTS = [
+  'linear-gradient(135deg,#e53e3e,#c0392b)',
+  'linear-gradient(135deg,#d97706,#b45309)',
+  'linear-gradient(135deg,#059669,#047857)',
+  'linear-gradient(135deg,#7c3aed,#6d28d9)',
+  'linear-gradient(135deg,#0284c7,#0369a1)',
+  'linear-gradient(135deg,#db2777,#be185d)',
+];
+
 export default function ThemeGrid({
   menuData, settings, branch,
 }: {
   menuData: Category[]; settings: Record<string, string>; branch?: BranchInfo;
 }) {
-  const [activeCatId, setActiveCatId] = useState<number | 'all'>('all');
+  const [activeCatId, setActiveCatId] = useState<number>(() => menuData[0]?.id ?? 0);
   const [showInfo, setShowInfo] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+
   const name = settings.restaurant_name || 'Restoran';
   const currency = settings.currency || '₺';
   const accent = '#E53E3E';
   const hasInfo = branch && (branch.address || branch.working_hours || branch.wifi_password || branch.instagram || branch.phone);
 
-  const allProducts = menuData.flatMap((c) => c.products.map((p) => ({ ...p, categoryName: c.name })));
-  const displayed = activeCatId === 'all'
-    ? allProducts
-    : menuData.find((c) => c.id === activeCatId)?.products.map((p) => ({ ...p, categoryName: menuData.find((c) => c.id === activeCatId)?.name || '' })) || [];
+  const activeCat = menuData.find((c) => c.id === activeCatId);
+  const displayed = activeCat?.products.map((p) => ({ ...p, categoryName: activeCat.name })) ?? [];
 
   return (
     <div style={{ background: '#f5f5f7', minHeight: '100vh' }}>
       {showInfo && <InfoDrawer branch={branch ?? {}} onClose={() => setShowInfo(false)} />}
       {showFeedback && <FeedbackModal branch={branch ?? {}} onClose={() => setShowFeedback(false)} />}
+
       {/* Header */}
       <header style={{ background: '#fff', borderBottom: '1px solid #ebebeb' }}>
         <div className="flex items-center gap-3 px-4 py-3">
@@ -48,21 +57,9 @@ export default function ThemeGrid({
             </>
           )}
           {branch?.logo_url && branch?.name && (
-            <p className="text-xs truncate ml-2" style={{ color: '#999' }}>{branch.name}</p>
+            <p className="text-xs truncate ml-2 flex-1 min-w-0" style={{ color: '#999' }}>{branch.name}</p>
           )}
-        </div>
-
-        {/* Info bar + action buttons */}
-        <div className="flex items-center justify-between px-4 pb-3">
-          <div className="flex gap-3">
-            {branch?.working_hours && (
-              <span className="text-xs flex items-center gap-1" style={{ color: '#666' }}>🕐 {branch.working_hours}</span>
-            )}
-            {branch?.phone && (
-              <span className="text-xs flex items-center gap-1" style={{ color: '#666' }}>📞 {branch.phone}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
             {hasInfo && (
               <button onClick={() => setShowInfo(true)}
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
@@ -73,57 +70,63 @@ export default function ThemeGrid({
             <button onClick={() => setShowFeedback(true)}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
               style={{ background: '#fff0f0', color: '#E53E3E', border: '1px solid #ffd5d5' }}>
-              ✉ Geri Bildirim
+              ✉
             </button>
           </div>
         </div>
       </header>
 
-      {/* Cover image */}
+      {/* Branch cover */}
       {branch?.cover_url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={branch.cover_url} alt="" style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
+        <img src={branch.cover_url} alt="" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
       )}
 
-      {/* Category filter */}
-      <div className="flex gap-2 overflow-x-auto px-3 py-3" style={{ scrollbarWidth: 'none', background: '#fff', borderBottom: '1px solid #ebebeb' }}>
-        <button
-          onClick={() => setActiveCatId('all')}
-          className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all"
-          style={{
-            background: activeCatId === 'all' ? accent : '#f0f0f0',
-            color: activeCatId === 'all' ? '#fff' : '#555',
-          }}>
-          Tümü
-        </button>
-        {menuData.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => setActiveCatId(c.id)}
-            className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all"
-            style={{
-              background: activeCatId === c.id ? accent : '#f0f0f0',
-              color: activeCatId === c.id ? '#fff' : '#555',
-            }}>
-            {c.name}
-          </button>
-        ))}
+      {/* Visual category selector — horizontal scroll */}
+      <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', background: '#fff', borderBottom: '2px solid #ebebeb' }}>
+        <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
+          {menuData.map((c, idx) => {
+            const isActive = c.id === activeCatId;
+            return (
+              <button key={c.id} onClick={() => setActiveCatId(c.id)}
+                className="relative rounded-2xl overflow-hidden flex-shrink-0 text-left"
+                style={{
+                  width: 96, height: 72,
+                  outline: isActive ? `3px solid ${accent}` : '3px solid transparent',
+                  outlineOffset: 1,
+                }}>
+                {c.cover_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.cover_url} alt={c.name}
+                    className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <div className="absolute inset-0"
+                    style={{ background: CAT_GRADIENTS[idx % CAT_GRADIENTS.length] }} />
+                )}
+                <div className="absolute inset-0"
+                  style={{ background: isActive ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.5)' }} />
+                <p className="absolute bottom-0 left-0 right-0 px-2 pb-1.5 font-bold leading-tight"
+                  style={{ color: '#fff', fontSize: 11, lineHeight: 1.25,
+                    textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+                  {c.name}
+                </p>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Selected category cover image */}
-      {activeCatId !== 'all' && (() => {
-        const cat = menuData.find((c) => c.id === activeCatId);
-        return cat?.cover_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cat.cover_url} alt={cat.name}
-            style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
-        ) : null;
-      })()}
+      {/* Selected category cover banner */}
+      {activeCat?.cover_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={activeCat.cover_url} alt={activeCat.name}
+          style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
+      )}
 
       {/* Product grid */}
       <div className="px-3 py-3 pb-10">
         {displayed.length === 0 ? (
-          <div className="text-center py-20" style={{ color: '#aaa', fontSize: 14 }}>Ürün bulunamadı</div>
+          <div className="text-center py-20" style={{ color: '#aaa', fontSize: 14 }}>Bu kategoride ürün yok</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {displayed.map((p) => (
@@ -131,12 +134,10 @@ export default function ThemeGrid({
                 style={{ background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                 {p.image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.image_url} alt={p.name} style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }} />
+                  <img src={p.image_url} alt={p.name}
+                    style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }} />
                 ) : (
-                  <div className="flex items-center justify-center text-3xl"
-                    style={{ width: '100%', height: 100, background: '#f9f9f9', color: '#ddd' }}>
-                    🍽️
-                  </div>
+                  <div style={{ width: '100%', height: 100, background: '#f0f0f0' }} />
                 )}
                 <div style={{ padding: '10px 10px 12px' }}>
                   {p.is_featured === 1 && (
