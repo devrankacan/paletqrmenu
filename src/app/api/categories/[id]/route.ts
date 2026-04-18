@@ -10,8 +10,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
-  const data = await req.json();
-  updateCategory(Number(id), data);
+  const body = await req.json();
+  const allowed = ['name', 'icon', 'sort_order', 'cover_url'];
+  const data = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)));
+  if (Object.keys(data).length === 0) return NextResponse.json({ error: 'No valid fields' }, { status: 400 });
+  try {
+    updateCategory(Number(id), data);
+  } catch (err) {
+    console.error('updateCategory error:', err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }
 

@@ -564,18 +564,21 @@ export default function AdminDashboard({
                         e.target.value = '';
                         const fd = new FormData();
                         fd.append('file', file);
+                        showMsg('Yükleniyor...');
                         const uploadRes = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
                         const uploadData = await uploadRes.json();
-                        if (uploadRes.ok) {
-                          await fetch(apiUrl(`/api/categories/${c.id}`), {
-                            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ cover_url: uploadData.url }),
-                          });
-                          setCategories(categories.map((cat) => cat.id === c.id ? { ...cat, cover_url: uploadData.url } : cat));
-                          showMsg('Kapak güncellendi ✓');
-                        } else {
-                          showMsg(uploadData.error || 'Yükleme hatası');
+                        if (!uploadRes.ok) { showMsg(uploadData.error || 'Dosya yükleme hatası'); return; }
+                        const patchRes = await fetch(apiUrl(`/api/categories/${c.id}`), {
+                          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ cover_url: uploadData.url }),
+                        });
+                        if (!patchRes.ok) {
+                          const patchData = await patchRes.json();
+                          showMsg(patchData.error || 'Kaydetme hatası — tekrar deneyin');
+                          return;
                         }
+                        if (selectedBranch) await fetchBranchData(selectedBranch.id);
+                        showMsg('Kapak güncellendi ✓');
                       }} />
                   </label>
                   <button onClick={() => handleDeleteCategory(c.id)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center flex-shrink-0"

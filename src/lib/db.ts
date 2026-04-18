@@ -21,7 +21,6 @@ let _initialized = false;
 
 export function initDb() {
   if (_initialized) return;
-  _initialized = true;
   const db = getDb();
 
   db.exec(`
@@ -130,6 +129,8 @@ export function initDb() {
     ins.run('restaurant_subtitle', 'Lezzet Sanatı');
     ins.run('currency', '₺');
   }
+
+  _initialized = true;
 }
 
 // ── Branches ──────────────────────────────────────────────────────────────────
