@@ -416,8 +416,38 @@ export default function AdminDashboard({
                     <textarea style={{ ...INPUT_STYLE, resize: 'none', height: 72 }} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="Ürün açıklaması..." />
                   </div>
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Görsel URL</label>
-                    <input style={INPUT_STYLE} value={productForm.image_url} onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })} placeholder="https://..." />
+                    <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Görsel</label>
+                    <div className="flex gap-2">
+                      <input style={{ ...INPUT_STYLE, flex: 1 }} value={productForm.image_url} onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })} placeholder="https://... veya bilgisayardan yükle" />
+                      <label className="flex items-center justify-center rounded-xl cursor-pointer flex-shrink-0"
+                        style={{ width: 42, height: 42, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--gold)', fontSize: 18 }} title="Bilgisayardan yükle">
+                        🖼️
+                        <input type="file" accept="image/*" className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            e.target.value = '';
+                            const fd = new FormData();
+                            fd.append('file', file);
+                            showMsg('Yükleniyor...');
+                            const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
+                            const data = await res.json();
+                            if (res.ok) { setProductForm((f) => ({ ...f, image_url: data.url })); showMsg('Görsel yüklendi ✓'); }
+                            else showMsg(data.error || 'Yükleme hatası');
+                          }} />
+                      </label>
+                    </div>
+                    {productForm.image_url && (
+                      <div className="mt-2 flex items-center gap-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={productForm.image_url} alt="Önizleme" className="rounded-xl object-cover flex-shrink-0" style={{ width: 64, height: 64 }} />
+                        <button type="button" className="text-xs px-3 py-1.5 rounded-lg"
+                          style={{ background: 'var(--surface-2)', color: '#ff6b6b', border: '1px solid var(--border)' }}
+                          onClick={() => setProductForm((f) => ({ ...f, image_url: '' }))}>
+                          Kaldır
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <div onClick={() => setProductForm({ ...productForm, is_featured: !productForm.is_featured })}
