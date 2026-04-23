@@ -12,7 +12,7 @@ echo "→ Dizin: $APP_DIR"
 cd "$APP_DIR"
 
 echo "→ Git pull..."
-git pull origin main
+git pull origin "$(git rev-parse --abbrev-ref HEAD)"
 
 echo "→ Bağımlılıklar kuruluyor..."
 npm ci --omit=dev --legacy-peer-deps
