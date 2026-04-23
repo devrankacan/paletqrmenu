@@ -41,7 +41,7 @@ export function InfoDrawer({
     copyColor: 'rgba(255,255,255,0.6)',
     copyBorder: 'rgba(255,255,255,0.12)',
   } : {
-    bg: 'rgba(250,250,252,0.96)',
+    bg: 'rgba(250,250,252,0.88)',
     text: '#111111',
     textSub: 'rgba(0,0,0,0.45)',
     textMuted: 'rgba(0,0,0,0.3)',
