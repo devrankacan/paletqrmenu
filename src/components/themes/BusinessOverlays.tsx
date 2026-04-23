@@ -417,15 +417,18 @@ export function ProductModal({
   return (
     <>
       <div
+        className="modal-fade-in"
         style={{ position: 'fixed', inset: 0, zIndex: 90, background: c.overlay, backdropFilter: 'blur(4px)' }}
         onClick={onClose}
       />
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: c.bg, borderRadius: '24px 24px 0 0',
-        maxHeight: '88vh', overflowY: 'auto',
-        maxWidth: 640, margin: '0 auto',
-      }}>
+      <div
+        className="modal-slide-up"
+        style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+          background: c.bg, borderRadius: '24px 24px 0 0',
+          maxHeight: '88vh', overflowY: 'auto',
+          maxWidth: 640, margin: '0 auto',
+        }}>
         {/* Image area */}
         <div style={{ position: 'relative' }}>
           {product.image_url ? (

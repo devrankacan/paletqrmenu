@@ -66,3 +66,14 @@ body {
   50% { box-shadow: 0 0 0 5px rgba(201, 169, 110, 0); }
 }
 .badge-pulse { animation: pulse-gold 2.5s infinite; }
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.modal-slide-up { animation: slideUp 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+.modal-fade-in { animation: fadeIn 0.25s ease forwards; }
