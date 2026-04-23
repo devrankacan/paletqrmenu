@@ -435,7 +435,7 @@ export function ProductModal({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={product.image_url} alt={product.name}
-              style={{ width: '100%', height: 280, objectFit: 'cover', display: 'block', borderRadius: '24px 24px 0 0' }}
+              style={{ width: '100%', height: 'auto', maxHeight: '60vh', objectFit: 'contain', display: 'block', borderRadius: '24px 24px 0 0', background: c.placeholder }}
             />
           ) : (
             <div style={{ width: '100%', height: 140, background: c.placeholder, borderRadius: '24px 24px 0 0' }} />
