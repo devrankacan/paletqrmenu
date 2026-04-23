@@ -371,6 +371,114 @@ export function SearchOverlay({
   );
 }
 
+/* ── Product Modal ───────────────────────────────────────── */
+export type ProductModalProduct = {
+  id: number; name: string; description: string;
+  price: number; image_url: string; is_featured: number;
+};
+
+export function ProductModal({
+  product, currency, isDark, featuredLabel, onClose,
+}: {
+  product: ProductModalProduct;
+  currency: string;
+  isDark: boolean;
+  featuredLabel: string;
+  onClose: () => void;
+}) {
+  const c = isDark ? {
+    bg: '#1c1c1c',
+    text: '#ffffff',
+    textSub: 'rgba(255,255,255,0.6)',
+    accent: '#C9A96E',
+    overlay: 'rgba(0,0,0,0.78)',
+    closeIconBg: 'rgba(0,0,0,0.55)',
+    closeIconColor: '#fff',
+    featuredBg: 'rgba(201,169,110,0.15)',
+    featuredColor: '#C9A96E',
+    featuredBorder: 'rgba(201,169,110,0.3)',
+    placeholder: 'rgba(255,255,255,0.06)',
+  } : {
+    bg: '#ffffff',
+    text: '#1a1a1a',
+    textSub: '#666',
+    accent: '#E53E3E',
+    overlay: 'rgba(0,0,0,0.55)',
+    closeIconBg: 'rgba(255,255,255,0.88)',
+    closeIconColor: '#333',
+    featuredBg: '#fff5e0',
+    featuredColor: '#d97706',
+    featuredBorder: '#fde68a',
+    placeholder: '#f0f0f0',
+  };
+
+  const fmt = (n: number) => n % 1 === 0 ? n.toFixed(0) : n.toFixed(2);
+
+  return (
+    <>
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 90, background: c.overlay, backdropFilter: 'blur(4px)' }}
+        onClick={onClose}
+      />
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+        background: c.bg, borderRadius: '24px 24px 0 0',
+        maxHeight: '88vh', overflowY: 'auto',
+        maxWidth: 640, margin: '0 auto',
+      }}>
+        {/* Image area */}
+        <div style={{ position: 'relative' }}>
+          {product.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.image_url} alt={product.name}
+              style={{ width: '100%', height: 280, objectFit: 'cover', display: 'block', borderRadius: '24px 24px 0 0' }}
+            />
+          ) : (
+            <div style={{ width: '100%', height: 140, background: c.placeholder, borderRadius: '24px 24px 0 0' }} />
+          )}
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute', top: 14, right: 14,
+              width: 36, height: 36, borderRadius: '50%',
+              background: c.closeIconBg, backdropFilter: 'blur(8px)',
+              border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: c.closeIconColor, fontSize: 16, lineHeight: 1,
+            }}>
+            ✕
+          </button>
+        </div>
+
+        {/* Content */}
+        <div style={{ padding: '22px 22px 40px' }}>
+          {product.is_featured === 1 && (
+            <span style={{
+              display: 'inline-block', marginBottom: 10,
+              background: c.featuredBg, color: c.featuredColor,
+              border: `1px solid ${c.featuredBorder}`,
+              fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 99,
+            }}>★ {featuredLabel}</span>
+          )}
+          <h2 style={{ color: c.text, fontSize: 22, fontWeight: 800, lineHeight: 1.3, margin: 0, marginBottom: 10 }}>
+            {product.name}
+          </h2>
+          {product.description && (
+            <p style={{ color: c.textSub, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 18 }}>
+              {product.description}
+            </p>
+          )}
+          <p style={{ color: c.accent, fontSize: 30, fontWeight: 900, margin: 0 }}>
+            {currency}{fmt(product.price)}
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ── FeedbackModal kept for backwards compat (unused) ────── */
 export function FeedbackModal({ onClose }: { branch: OverlayBranch; onClose: () => void }) {
   onClose();

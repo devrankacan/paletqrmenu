@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { InfoDrawer, SearchOverlay } from './BusinessOverlays';
+import { InfoDrawer, SearchOverlay, ProductModal, type ProductModalProduct } from './BusinessOverlays';
 import translations, { type Lang, nextLang } from '@/lib/translations';
 import { translateMenu } from '@/lib/translate';
 
@@ -26,6 +26,7 @@ export default function ThemeBanner({ menuData, settings, branch }: {
   menuData: Category[]; settings: Record<string, string>; branch?: BranchInfo;
 }) {
   const [activeCatId, setActiveCatId] = useState<number | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductModalProduct | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [lang, setLang] = useState<Lang>('tr');
@@ -77,6 +78,7 @@ export default function ThemeBanner({ menuData, settings, branch }: {
       <div dir={dir} style={{ background: '#0d0d0d', minHeight: '100vh' }}>
         {showInfo && <InfoDrawer branch={{ ...branch!, name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} lang={lang} />}
         {showSearch && <SearchOverlay menuData={displayData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
+        {selectedProduct && <ProductModal product={selectedProduct} currency={currency} isDark={true} featuredLabel={tr.featured} onClose={() => setSelectedProduct(null)} />}
         <header className="sticky top-0 z-30 flex items-center gap-2 px-4 py-3"
           style={{ background: 'rgba(10,10,10,0.97)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <BtnIcon onClick={() => setActiveCatId(null)}>{tr.back}</BtnIcon>
@@ -89,8 +91,9 @@ export default function ThemeBanner({ menuData, settings, branch }: {
           {activeCat.products.length === 0 ? (
             <div className="text-center py-20" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>{tr.noProducts}</div>
           ) : activeCat.products.map((p) => (
-            <div key={p.id} className="flex rounded-2xl overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div key={p.id} className="flex rounded-2xl overflow-hidden cursor-pointer active:opacity-75"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+              onClick={() => setSelectedProduct(p)}>
               {p.image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.image_url} alt={p.name} className="flex-shrink-0 object-cover" style={{ width: 100, height: 90 }} />

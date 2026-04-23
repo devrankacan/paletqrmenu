@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { InfoDrawer, SearchOverlay } from './BusinessOverlays';
+import { InfoDrawer, SearchOverlay, ProductModal, type ProductModalProduct } from './BusinessOverlays';
 import translations, { type Lang, nextLang } from '@/lib/translations';
 import { translateMenu } from '@/lib/translate';
 
@@ -24,6 +24,7 @@ export default function ThemeGrid({
   menuData: Category[]; settings: Record<string, string>; branch?: BranchInfo;
 }) {
   const [activeCatId, setActiveCatId] = useState<number>(() => menuData[0]?.id ?? 0);
+  const [selectedProduct, setSelectedProduct] = useState<ProductModalProduct | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [lang, setLang] = useState<Lang>('tr');
@@ -58,6 +59,7 @@ export default function ThemeGrid({
     <div dir={dir} style={{ background: '#f5f5f7', minHeight: '100vh' }}>
       {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={false} lang={lang} />}
       {showSearch && <SearchOverlay menuData={displayData} currency={currency} lang={lang} isDark={false} onClose={() => setShowSearch(false)} />}
+      {selectedProduct && <ProductModal product={selectedProduct} currency={currency} isDark={false} featuredLabel={tr.featured} onClose={() => setSelectedProduct(null)} />}
 
       {/* Header */}
       <header style={{ background: '#fff', borderBottom: '1px solid #ebebeb' }}>
@@ -143,8 +145,9 @@ export default function ThemeGrid({
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {displayed.map((p) => (
-              <div key={p.id} className="rounded-2xl overflow-hidden"
-                style={{ background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div key={p.id} className="rounded-2xl overflow-hidden cursor-pointer active:opacity-75"
+                style={{ background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+                onClick={() => setSelectedProduct(p)}>
                 {p.image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.image_url} alt={p.name}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { InfoDrawer, SearchOverlay } from '@/components/themes/BusinessOverlays';
+import { InfoDrawer, SearchOverlay, ProductModal, type ProductModalProduct } from '@/components/themes/BusinessOverlays';
 import translations, { type Lang, nextLang } from '@/lib/translations';
 import { translateMenu } from '@/lib/translate';
 
@@ -33,6 +33,7 @@ export default function MenuClient({ menuData, settings, branch }: {
   menuData: Category[]; settings: Settings; branch?: BranchInfo;
 }) {
   const [activeCatId, setActiveCatId] = useState<number>(() => menuData[0]?.id ?? 0);
+  const [selectedProduct, setSelectedProduct] = useState<ProductModalProduct | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [lang, setLang] = useState<Lang>('tr');
@@ -65,6 +66,7 @@ export default function MenuClient({ menuData, settings, branch }: {
     <div dir={dir} style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       {showInfo && <InfoDrawer branch={{ ...(branch ?? {}), name, logo_url: branch?.logo_url }} onClose={() => setShowInfo(false)} isDark={true} lang={lang} />}
       {showSearch && <SearchOverlay menuData={displayData} currency={currency} lang={lang} isDark={true} onClose={() => setShowSearch(false)} />}
+      {selectedProduct && <ProductModal product={selectedProduct} currency={currency} isDark={true} featuredLabel={tr.featured} onClose={() => setSelectedProduct(null)} />}
 
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-50"
@@ -164,7 +166,7 @@ export default function MenuClient({ menuData, settings, branch }: {
         ) : (
           <div className="flex flex-col gap-3">
             {activeCat.products.map((product) => (
-              <ProductCard key={product.id} product={product} currency={currency} featuredLabel={tr.featured} />
+              <ProductCard key={product.id} product={product} currency={currency} featuredLabel={tr.featured} onClick={() => setSelectedProduct(product)} />
             ))}
           </div>
         )}
@@ -191,11 +193,12 @@ export default function MenuClient({ menuData, settings, branch }: {
   );
 }
 
-function ProductCard({ product, currency, featuredLabel }: { product: Product; currency: string; featuredLabel: string }) {
+function ProductCard({ product, currency, featuredLabel, onClick }: { product: Product; currency: string; featuredLabel: string; onClick: () => void }) {
   const hasImage = !!product.image_url?.trim();
   return (
-    <div className="rounded-2xl overflow-hidden flex"
-      style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+    <div className="rounded-2xl overflow-hidden flex cursor-pointer active:opacity-80"
+      style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+      onClick={onClick}>
       {hasImage && (
         <div className="flex-shrink-0" style={{ width: 100, height: 100 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
