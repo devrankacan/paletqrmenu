@@ -15,7 +15,7 @@ echo "→ Git pull..."
 git pull origin "$(git rev-parse --abbrev-ref HEAD)"
 
 echo "→ Bağımlılıklar kuruluyor..."
-npm ci --omit=dev --legacy-peer-deps
+npm ci --legacy-peer-deps
 
 echo "→ Build alınıyor..."
 npm run build
