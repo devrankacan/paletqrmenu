@@ -686,12 +686,16 @@ export default function AdminDashboard({
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
+                        e.target.value = '';
                         const fd = new FormData();
                         fd.append('file', file);
-                        const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
-                        const data = await res.json();
-                        if (res.ok) setBranchSettingsForm((f) => ({ ...f, cover_url: data.url }));
-                        else showMsg(data.error || 'Yükleme hatası');
+                        showMsg('Yükleniyor...');
+                        try {
+                          const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
+                          const data = await res.json();
+                          if (res.ok) { setBranchSettingsForm((f) => ({ ...f, cover_url: data.url })); showMsg('Görsel yüklendi ✓'); }
+                          else showMsg(data.error || 'Yükleme hatası');
+                        } catch { showMsg('Yükleme hatası — konsolu kontrol edin'); }
                       }} />
                   </label>
                   {branchSettingsForm.cover_url && (

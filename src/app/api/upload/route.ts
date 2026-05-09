@@ -40,14 +40,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: `${basePath}/api/files/${svgFilename}` });
   }
 
-  await sharp(buffer)
-    .rotate() // EXIF yönünü düzelt (telefon fotoğrafları için)
-    .resize(MAX_DIMENSION, MAX_DIMENSION, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .webp({ quality: 85 })
-    .toFile(path.join(uploadDir, filename));
+  try {
+    await sharp(buffer)
+      .rotate()
+      .resize(MAX_DIMENSION, MAX_DIMENSION, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 85 })
+      .toFile(path.join(uploadDir, filename));
+  } catch (err) {
+    console.error('[upload] sharp error:', err);
+    // sharp başarısız olursa orijinal dosyayı kaydet
+    const fallbackExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const fallbackName = `upload-${Date.now()}.${fallbackExt}`;
+    await writeFile(path.join(uploadDir, fallbackName), buffer);
+    const basePath = process.env.BASE_PATH || '';
+    return NextResponse.json({ url: `${basePath}/api/files/${fallbackName}` });
+  }
 
   const basePath = process.env.BASE_PATH || '';
   return NextResponse.json({ url: `${basePath}/api/files/${filename}` });
