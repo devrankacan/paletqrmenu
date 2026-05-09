@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ protocol: 'https', hostname: '**' }, { protocol: 'http', hostname: '**' }],
   },
   // Silence the better-sqlite3 native module warning
-  serverExternalPackages: ['better-sqlite3'],
+  serverExternalPackages: ['better-sqlite3', 'sharp'],
 };
 
 export default nextConfig;

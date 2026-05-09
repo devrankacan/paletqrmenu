@@ -536,7 +536,7 @@ export default function AdminDashboard({
                     <label className="flex items-center gap-3 cursor-pointer rounded-xl px-4 py-3"
                       style={{ background: 'var(--surface-2)', border: '1px dashed var(--border)' }}>
                       <span style={{ color: 'var(--gold)', fontSize: 18 }}>🖼️</span>
-                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Görsel seç (JPG, PNG — max 5MB)</span>
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Görsel seç (JPG, PNG, HEIC — max 20MB)</span>
                       <input type="file" accept="image/*" className="hidden"
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
@@ -648,7 +648,7 @@ export default function AdminDashboard({
                   <label className="flex items-center gap-3 cursor-pointer rounded-xl px-4 py-3 transition-all"
                     style={{ background: 'var(--surface-2)', border: '1px dashed var(--border)' }}>
                     <span style={{ color: 'var(--gold)', fontSize: 20 }}>📁</span>
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Görsel seç (JPG, PNG, SVG — max 5MB)</span>
+                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Görsel seç (JPG, PNG, SVG, HEIC — max 20MB)</span>
                     <input type="file" accept="image/*" className="hidden"
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
@@ -681,7 +681,7 @@ export default function AdminDashboard({
                   <label className="flex items-center gap-3 cursor-pointer rounded-xl px-4 py-3 transition-all"
                     style={{ background: 'var(--surface-2)', border: '1px dashed var(--border)' }}>
                     <span style={{ color: 'var(--gold)', fontSize: 20 }}>🖼️</span>
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Görsel seç (JPG, PNG — max 5MB)</span>
+                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Görsel seç (JPG, PNG, HEIC — max 20MB)</span>
                     <input type="file" accept="image/*" className="hidden"
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
