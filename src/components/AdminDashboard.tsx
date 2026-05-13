@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiUrl } from '@/lib/api';
 
@@ -69,6 +69,27 @@ export default function AdminDashboard({
   });
 
   const showMsg = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
+
+  const dragIndex = useRef<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+
+  const handleCatDrop = async (dropIndex: number) => {
+    const from = dragIndex.current;
+    if (from === null || from === dropIndex) { setDragOver(null); return; }
+    const reordered = [...categories];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(dropIndex, 0, moved);
+    const updated = reordered.map((c, i) => ({ ...c, sort_order: i }));
+    setCategories(updated);
+    setDragOver(null);
+    dragIndex.current = null;
+    await Promise.all(updated.map((c) =>
+      fetch(apiUrl(`/api/categories/${c.id}`), {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sort_order: c.sort_order }),
+      })
+    ));
+  };
 
   const fetchBranchData = async (branchId: number) => {
     const [cR, pR] = await Promise.all([
@@ -574,8 +595,22 @@ export default function AdminDashboard({
                 <p className="text-sm">Bu şube için henüz kategori yok</p>
               </div>
             ) : (
-              categories.map((c) => (
-                <div key={c.id} className="flex items-center gap-3 rounded-2xl p-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              categories.map((c, idx) => (
+                <div key={c.id}
+                  draggable
+                  onDragStart={() => { dragIndex.current = idx; }}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(idx); }}
+                  onDragLeave={() => setDragOver(null)}
+                  onDrop={() => handleCatDrop(idx)}
+                  onDragEnd={() => { dragIndex.current = null; setDragOver(null); }}
+                  className="flex items-center gap-3 rounded-2xl p-3 transition-all"
+                  style={{
+                    background: 'var(--surface)',
+                    border: `1px solid ${dragOver === idx ? 'var(--gold)' : 'var(--border)'}`,
+                    opacity: dragIndex.current === idx ? 0.5 : 1,
+                    cursor: 'grab',
+                  }}>
+                  <span className="flex-shrink-0 select-none" style={{ color: 'var(--text-secondary)', fontSize: 16, cursor: 'grab' }}>⠿</span>
                   {c.cover_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.cover_url} alt="" className="rounded-xl object-cover flex-shrink-0" style={{ width: 48, height: 48 }} />
