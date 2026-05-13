@@ -94,6 +94,28 @@ export default function AdminDashboard({
   const prodDragIndex = useRef<number | null>(null);
   const [prodDragOver, setProdDragOver] = useState<number | null>(null);
 
+  const catScrollRef = useRef<HTMLDivElement>(null);
+  const catScrollDrag = useRef({ down: false, startX: 0, scrollLeft: 0 });
+
+  const onCatMouseDown = (e: React.MouseEvent) => {
+    const el = catScrollRef.current;
+    if (!el) return;
+    catScrollDrag.current = { down: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft };
+    el.style.cursor = 'grabbing';
+  };
+  const onCatMouseMove = (e: React.MouseEvent) => {
+    const d = catScrollDrag.current;
+    if (!d.down) return;
+    e.preventDefault();
+    const el = catScrollRef.current;
+    if (!el) return;
+    el.scrollLeft = d.scrollLeft - (e.pageX - el.offsetLeft - d.startX);
+  };
+  const onCatMouseUp = () => {
+    catScrollDrag.current.down = false;
+    if (catScrollRef.current) catScrollRef.current.style.cursor = 'grab';
+  };
+
   const handleProductDrop = async (dropIndex: number) => {
     const from = prodDragIndex.current;
     if (from === null || from === dropIndex) { setProdDragOver(null); return; }
@@ -389,7 +411,8 @@ export default function AdminDashboard({
         {activeTab === 'products' && selectedBranch && (
           <div>
             <div className="flex items-center gap-3 mb-4 flex-wrap">
-              <div className="flex gap-1 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <div ref={catScrollRef} className="flex gap-1 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none', cursor: 'grab', userSelect: 'none' }}
+                onMouseDown={onCatMouseDown} onMouseMove={onCatMouseMove} onMouseUp={onCatMouseUp} onMouseLeave={onCatMouseUp}>
                 <button onClick={() => setFilterCat('all')} className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium"
                   style={filterCat === 'all' ? { background: 'var(--gold)', color: '#0D0D0D' } : { background: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
                   Tümü
