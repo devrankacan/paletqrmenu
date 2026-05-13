@@ -91,6 +91,30 @@ export default function AdminDashboard({
     ));
   };
 
+  const prodDragIndex = useRef<number | null>(null);
+  const [prodDragOver, setProdDragOver] = useState<number | null>(null);
+
+  const handleProductDrop = async (dropIndex: number) => {
+    const from = prodDragIndex.current;
+    if (from === null || from === dropIndex) { setProdDragOver(null); return; }
+    const reordered = [...filteredProducts];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(dropIndex, 0, moved);
+    const updated = reordered.map((p, i) => ({ ...p, sort_order: i }));
+    setProducts(products.map((p) => {
+      const u = updated.find((x) => x.id === p.id);
+      return u ? { ...p, sort_order: u.sort_order } : p;
+    }));
+    setProdDragOver(null);
+    prodDragIndex.current = null;
+    await Promise.all(updated.map((p) =>
+      fetch(apiUrl(`/api/products/${p.id}`), {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sort_order: p.sort_order }),
+      })
+    ));
+  };
+
   const fetchBranchData = async (branchId: number) => {
     const [cR, pR] = await Promise.all([
       fetch(apiUrl(`/api/categories?branch_id=${branchId}`)),
@@ -493,6 +517,9 @@ export default function AdminDashboard({
               </form>
             )}
 
+            {filterCat !== 'all' && (
+              <p className="text-xs text-center mb-1" style={{ color: 'var(--text-secondary)' }}>⠿ Sıralamak için sürükleyin</p>
+            )}
             <div className="flex flex-col gap-2">
               {filteredProducts.length === 0 ? (
                 <div className="text-center py-16 rounded-2xl" style={{ background: 'var(--surface)', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
@@ -500,9 +527,24 @@ export default function AdminDashboard({
                   {categories.length === 0 && <p className="text-xs mt-1">Önce Kategoriler sekmesinden kategori ekleyin</p>}
                 </div>
               ) : (
-                filteredProducts.map((p) => (
-                  <div key={p.id} className="flex items-center gap-3 rounded-2xl p-3"
-                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', opacity: p.is_available ? 1 : 0.5 }}>
+                filteredProducts.map((p, idx) => (
+                  <div key={p.id}
+                    draggable={filterCat !== 'all'}
+                    onDragStart={() => { if (filterCat !== 'all') prodDragIndex.current = idx; }}
+                    onDragOver={(e) => { if (filterCat !== 'all') { e.preventDefault(); setProdDragOver(idx); } }}
+                    onDragLeave={() => setProdDragOver(null)}
+                    onDrop={() => { if (filterCat !== 'all') handleProductDrop(idx); }}
+                    onDragEnd={() => { prodDragIndex.current = null; setProdDragOver(null); }}
+                    className="flex items-center gap-3 rounded-2xl p-3 transition-all"
+                    style={{
+                      background: 'var(--surface)',
+                      border: `1px solid ${prodDragOver === idx && filterCat !== 'all' ? 'var(--gold)' : 'var(--border)'}`,
+                      opacity: p.is_available ? 1 : 0.5,
+                      cursor: filterCat !== 'all' ? 'grab' : 'default',
+                    }}>
+                    {filterCat !== 'all' && (
+                      <span className="flex-shrink-0 select-none" style={{ color: 'var(--text-secondary)', fontSize: 16 }}>⠿</span>
+                    )}
                     {p.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.image_url} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
