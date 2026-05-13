@@ -61,6 +61,22 @@ export default function AdminDashboard({
   const [catForm, setCatForm] = useState({ name: '', cover_url: '' });
   const [showAddCat, setShowAddCat] = useState(false);
 
+  // Category edit
+  const [editCatId, setEditCatId] = useState<number | null>(null);
+  const [editCatName, setEditCatName] = useState('');
+
+  const handleSaveCatName = async (id: number) => {
+    const name = editCatName.trim();
+    if (!name) { setEditCatId(null); return; }
+    await fetch(apiUrl(`/api/categories/${id}`), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    setCategories(categories.map((c) => c.id === id ? { ...c, name } : c));
+    setEditCatId(null);
+    showMsg('Kategori adı güncellendi ✓');
+  };
+
   // Settings form
   const [sForm, setSForm] = useState({
     restaurant_name: settings.restaurant_name || '',
@@ -681,7 +697,22 @@ export default function AdminDashboard({
                     <div className="rounded-xl flex-shrink-0 flex items-center justify-center"
                       style={{ width: 48, height: 48, background: 'var(--surface-2)', color: 'var(--text-secondary)', fontSize: 20 }}>🖼️</div>
                   )}
-                  <span className="flex-1 font-medium" style={{ color: 'var(--text-primary)' }}>{c.name}</span>
+                  {editCatId === c.id ? (
+                    <input
+                      autoFocus
+                      className="flex-1 font-medium rounded-lg px-2 py-1 text-sm"
+                      style={{ background: 'var(--surface-2)', border: '1px solid var(--gold)', color: 'var(--text-primary)', outline: 'none' }}
+                      value={editCatName}
+                      onChange={(e) => setEditCatName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveCatName(c.id); if (e.key === 'Escape') setEditCatId(null); }}
+                      onBlur={() => handleSaveCatName(c.id)}
+                    />
+                  ) : (
+                    <span className="flex-1 font-medium" style={{ color: 'var(--text-primary)' }}>{c.name}</span>
+                  )}
+                  <button onClick={() => { setEditCatId(c.id); setEditCatName(c.name); }}
+                    className="w-8 h-8 rounded-lg text-sm flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'var(--surface-2)', color: 'var(--gold)' }} title="İsmi düzenle">✏️</button>
                   <label className="cursor-pointer w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ background: 'var(--surface-2)', color: 'var(--gold)' }} title="Kapak görseli değiştir">
                     📷
