@@ -101,10 +101,8 @@ export default function AdminDashboard({
     const [moved] = reordered.splice(from, 1);
     reordered.splice(dropIndex, 0, moved);
     const updated = reordered.map((p, i) => ({ ...p, sort_order: i }));
-    setProducts(products.map((p) => {
-      const u = updated.find((x) => x.id === p.id);
-      return u ? { ...p, sort_order: u.sort_order } : p;
-    }));
+    const otherProducts = products.filter((p) => !updated.find((u) => u.id === p.id));
+    setProducts([...otherProducts, ...updated]);
     setProdDragOver(null);
     prodDragIndex.current = null;
     await Promise.all(updated.map((p) =>
