@@ -547,7 +547,7 @@ export default function AdminDashboard({
                     )}
                     {p.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.image_url} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                      <img draggable={false} src={p.image_url} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                     ) : (
                       <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center text-lg" style={{ background: 'var(--surface-2)' }}>
                         {categories.find((c) => c.id === p.category_id)?.icon || '🍽️'}
