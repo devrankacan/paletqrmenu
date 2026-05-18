@@ -122,18 +122,18 @@ print("Tüm şubeler:")
 for b in branches:
     print(f"  id={b['id']} slug={b['slug']} name={b.get('name','')}")
 
-kasustü = None
+target = None
 for b in branches:
-    if 'ka' in b['slug'].lower() and ('st' in b['slug'].lower() or 'üst' in b['slug'].lower()):
-        kasustü = b
+    if b['slug'] == 'yomra-sube':
+        target = b
         break
-if not kasustü:
-    print("\nKaşüstü şubesi bulunamadı! Slug listesine bakın.")
+if not target:
+    print("\nyomra-sube bulunamadı! Slug listesine bakın.")
     conn.close()
     raise SystemExit()
 
-branch_id = kasustü['id']
-print(f"\nKaşüstü şubesi: id={branch_id}, slug={kasustü['slug']}\n")
+branch_id = target['id']
+print(f"\nHedef şube: id={branch_id}, slug={target['slug']}\n")
 
 for sort_order, (cat_name, products) in enumerate(MENU):
     # Kategoriyi bul veya oluştur
