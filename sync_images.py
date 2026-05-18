@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Sync image_url from Merkez branch to all other branches
-for the specified categories, matching by product name.
-Also syncs category cover_url.
+Merkez şubesindeki belirtilen kategorilerdeki tüm ürünleri
+(görsel, açıklama, fiyat dahil) diğer tüm şubelere birebir kopyalar/günceller.
+Her şube kendi bağımsız satırlarına sahip olur.
 """
 import sqlite3
 
@@ -18,86 +18,94 @@ conn = sqlite3.connect(DB_PATH)
 conn.row_factory = sqlite3.Row
 c = conn.cursor()
 
-# Get Merkez branch
+# Merkez şubesini bul
 c.execute("SELECT id, slug FROM branches WHERE slug LIKE '%merkez%'")
 merkez = c.fetchone()
 if not merkez:
     c.execute("SELECT id, slug FROM branches")
     rows = c.fetchall()
-    print("Branches:", [dict(r) for r in rows])
-    raise SystemExit("Merkez branch not found")
+    print("Şubeler:", [dict(r) for r in rows])
+    raise SystemExit("Merkez şubesi bulunamadı")
 
 merkez_id = merkez['id']
-print(f"Merkez branch: id={merkez_id}, slug={merkez['slug']}")
+print(f"Merkez: id={merkez_id}, slug={merkez['slug']}")
 
-# Get all other branches
 c.execute("SELECT id, slug FROM branches WHERE id != ?", (merkez_id,))
 other_branches = c.fetchall()
-print(f"Other branches: {[b['slug'] for b in other_branches]}")
+print(f"Diğer şubeler: {[b['slug'] for b in other_branches]}\n")
 
-# For each target category, get Merkez category + products
 for cat_name in TARGET_CATEGORIES:
-    c.execute("""
-        SELECT id, name, cover_url FROM categories
-        WHERE branch_id = ? AND name = ?
-    """, (merkez_id, cat_name))
+    # Merkez kategorisini al
+    c.execute("SELECT id, name, cover_url, icon, sort_order FROM categories WHERE branch_id = ? AND name = ?", (merkez_id, cat_name))
     merkez_cat = c.fetchone()
     if not merkez_cat:
-        print(f"  [SKIP] '{cat_name}' not found in Merkez")
+        print(f"[ATLA] '{cat_name}' Merkez'de bulunamadı")
         continue
 
-    # Get all products in this Merkez category
-    c.execute("""
-        SELECT id, name, image_url FROM products
-        WHERE category_id = ?
-    """, (merkez_cat['id'],))
-    merkez_products = {row['name']: row for row in c.fetchall()}
-
-    print(f"\nCategory '{cat_name}' — {len(merkez_products)} products in Merkez")
+    # Merkez'deki ürünleri al (isim → satır)
+    c.execute("SELECT * FROM products WHERE category_id = ? ORDER BY sort_order", (merkez_cat['id'],))
+    merkez_products = c.fetchall()
+    merkez_by_name = {p['name']: p for p in merkez_products}
+    print(f"'{cat_name}' — Merkez'de {len(merkez_products)} ürün")
 
     for branch in other_branches:
         branch_id = branch['id']
-        branch_slug = branch['slug']
+        slug = branch['slug']
 
-        # Find matching category in this branch
-        c.execute("""
-            SELECT id, name, cover_url FROM categories
-            WHERE branch_id = ? AND name = ?
-        """, (branch_id, cat_name))
+        # Hedef kategorisi var mı?
+        c.execute("SELECT id FROM categories WHERE branch_id = ? AND name = ?", (branch_id, cat_name))
         target_cat = c.fetchone()
+
         if not target_cat:
-            print(f"  [{branch_slug}] category not found, skipping")
-            continue
-
-        # Sync category cover_url if different
-        if merkez_cat['cover_url'] and merkez_cat['cover_url'] != target_cat['cover_url']:
+            # Kategori yok, oluştur
             c.execute("""
-                UPDATE categories SET cover_url = ? WHERE id = ?
-            """, (merkez_cat['cover_url'], target_cat['id']))
-            print(f"  [{branch_slug}] Updated cover_url for '{cat_name}'")
-
-        # Get products in target category
-        c.execute("""
-            SELECT id, name, image_url FROM products
-            WHERE category_id = ?
-        """, (target_cat['id'],))
-        target_products = c.fetchall()
-
-        updated = 0
-        for prod in target_products:
-            merkez_prod = merkez_products.get(prod['name'])
-            if merkez_prod and merkez_prod['image_url'] and merkez_prod['image_url'] != prod['image_url']:
-                c.execute("""
-                    UPDATE products SET image_url = ? WHERE id = ?
-                """, (merkez_prod['image_url'], prod['id']))
-                updated += 1
-                print(f"    [{branch_slug}] '{prod['name']}': {prod['image_url']} -> {merkez_prod['image_url']}")
-
-        if updated == 0:
-            print(f"  [{branch_slug}] '{cat_name}': all images already match")
+                INSERT INTO categories (branch_id, name, icon, sort_order, cover_url)
+                VALUES (?, ?, ?, ?, ?)
+            """, (branch_id, merkez_cat['name'], merkez_cat['icon'], merkez_cat['sort_order'], merkez_cat['cover_url']))
+            target_cat_id = c.lastrowid
+            print(f"  [{slug}] Kategori oluşturuldu: '{cat_name}'")
         else:
-            print(f"  [{branch_slug}] '{cat_name}': updated {updated} product images")
+            target_cat_id = target_cat['id']
+            # Kategori kapak görselini ve ikonunu güncelle
+            c.execute("""
+                UPDATE categories SET cover_url = ?, icon = ? WHERE id = ?
+            """, (merkez_cat['cover_url'], merkez_cat['icon'], target_cat_id))
+
+        # Hedef şubedeki mevcut ürünleri al
+        c.execute("SELECT * FROM products WHERE category_id = ?", (target_cat_id,))
+        existing = {p['name']: p for p in c.fetchall()}
+
+        added = 0
+        updated = 0
+
+        for mp in merkez_products:
+            name = mp['name']
+            if name in existing:
+                # Var olan ürünü güncelle (görsel + açıklama + fiyat + sort_order)
+                ep = existing[name]
+                changed = (
+                    ep['image_url'] != mp['image_url'] or
+                    ep['description'] != mp['description'] or
+                    ep['price'] != mp['price'] or
+                    ep['sort_order'] != mp['sort_order']
+                )
+                if changed:
+                    c.execute("""
+                        UPDATE products
+                        SET image_url = ?, description = ?, price = ?, sort_order = ?
+                        WHERE id = ?
+                    """, (mp['image_url'], mp['description'], mp['price'], mp['sort_order'], ep['id']))
+                    updated += 1
+            else:
+                # Yeni ürün ekle
+                c.execute("""
+                    INSERT INTO products (category_id, name, description, price, image_url, sort_order)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (target_cat_id, mp['name'], mp['description'], mp['price'], mp['image_url'], mp['sort_order']))
+                added += 1
+
+        print(f"  [{slug}] '{cat_name}': {updated} güncellendi, {added} eklendi")
 
 conn.commit()
 conn.close()
-print("\nDone.")
+print("\nTamamlandı.")
