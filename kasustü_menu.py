@@ -120,7 +120,7 @@ c.execute("SELECT id, slug, name FROM branches")
 branches = c.fetchall()
 print("Tüm şubeler:")
 for b in branches:
-    print(f"  id={b['id']} slug={b['slug']} name={b.get('name','')}")
+    print(f"  id={b['id']} slug={b['slug']}")
 
 target = None
 for b in branches:
