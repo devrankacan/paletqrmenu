@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 """
-Merkez şubesindeki belirtilen kategorilerdeki tüm ürünleri
-(görsel, açıklama, fiyat dahil) diğer tüm şubelere birebir kopyalar/günceller.
+Merkez şubesindeki TÜM kategorileri ve ürünleri (görsel, açıklama, fiyat)
+diğer tüm şubelere birebir kopyalar/günceller.
 Her şube kendi bağımsız satırlarına sahip olur.
 """
 import sqlite3
 
 DB_PATH = '/var/www/paletpastanesi/data/menu.db'
-
-TARGET_CATEGORIES = [
-    'Pastalar', 'Cup Çeşitleri', 'Şerbetli Tatlılar', 'Özel Tatlılar',
-    'Kruvasanlar', 'Unlu Mamüller', 'Atıştırmalıklar',
-    'Soğuk İçecekler', 'Dondurmalar', 'Sıcak İçecekler'
-]
 
 conn = sqlite3.connect(DB_PATH)
 conn.row_factory = sqlite3.Row
@@ -34,18 +28,17 @@ c.execute("SELECT id, slug FROM branches WHERE id != ?", (merkez_id,))
 other_branches = c.fetchall()
 print(f"Diğer şubeler: {[b['slug'] for b in other_branches]}\n")
 
-for cat_name in TARGET_CATEGORIES:
-    # Merkez kategorisini al
-    c.execute("SELECT id, name, cover_url, icon, sort_order FROM categories WHERE branch_id = ? AND name = ?", (merkez_id, cat_name))
-    merkez_cat = c.fetchone()
-    if not merkez_cat:
-        print(f"[ATLA] '{cat_name}' Merkez'de bulunamadı")
-        continue
+# Merkez'deki tüm kategorileri al
+c.execute("SELECT id, name, cover_url, icon, sort_order FROM categories WHERE branch_id = ? ORDER BY sort_order", (merkez_id,))
+all_merkez_cats = c.fetchall()
+print(f"Merkez'de {len(all_merkez_cats)} kategori bulundu.\n")
 
-    # Merkez'deki ürünleri al (isim → satır)
+for merkez_cat in all_merkez_cats:
+    cat_name = merkez_cat['name']
+
+    # Merkez'deki ürünleri al
     c.execute("SELECT * FROM products WHERE category_id = ? ORDER BY sort_order", (merkez_cat['id'],))
     merkez_products = c.fetchall()
-    merkez_by_name = {p['name']: p for p in merkez_products}
     print(f"'{cat_name}' — Merkez'de {len(merkez_products)} ürün")
 
     for branch in other_branches:
@@ -81,7 +74,6 @@ for cat_name in TARGET_CATEGORIES:
         for mp in merkez_products:
             name = mp['name']
             if name in existing:
-                # Var olan ürünü güncelle (görsel + açıklama + fiyat + sort_order)
                 ep = existing[name]
                 changed = (
                     ep['image_url'] != mp['image_url'] or
@@ -97,7 +89,6 @@ for cat_name in TARGET_CATEGORIES:
                     """, (mp['image_url'], mp['description'], mp['price'], mp['sort_order'], ep['id']))
                     updated += 1
             else:
-                # Yeni ürün ekle
                 c.execute("""
                     INSERT INTO products (category_id, name, description, price, image_url, sort_order)
                     VALUES (?, ?, ?, ?, ?, ?)
