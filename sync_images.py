@@ -70,24 +70,26 @@ for merkez_cat in all_merkez_cats:
 
         added = 0
         updated = 0
+        deleted = 0
+
+        merkez_names = {mp['name'] for mp in merkez_products}
+
+        # Merkez'de olmayan ürünleri sil
+        for name, ep in existing.items():
+            if name not in merkez_names:
+                c.execute("DELETE FROM products WHERE id = ?", (ep['id'],))
+                deleted += 1
 
         for mp in merkez_products:
             name = mp['name']
             if name in existing:
                 ep = existing[name]
-                changed = (
-                    ep['image_url'] != mp['image_url'] or
-                    ep['description'] != mp['description'] or
-                    ep['price'] != mp['price'] or
-                    ep['sort_order'] != mp['sort_order']
-                )
-                if changed:
-                    c.execute("""
-                        UPDATE products
-                        SET image_url = ?, description = ?, price = ?, sort_order = ?
-                        WHERE id = ?
-                    """, (mp['image_url'], mp['description'], mp['price'], mp['sort_order'], ep['id']))
-                    updated += 1
+                c.execute("""
+                    UPDATE products
+                    SET image_url = ?, description = ?, price = ?, sort_order = ?
+                    WHERE id = ?
+                """, (mp['image_url'], mp['description'], mp['price'], mp['sort_order'], ep['id']))
+                updated += 1
             else:
                 c.execute("""
                     INSERT INTO products (category_id, name, description, price, image_url, sort_order)
@@ -95,7 +97,7 @@ for merkez_cat in all_merkez_cats:
                 """, (target_cat_id, mp['name'], mp['description'], mp['price'], mp['image_url'], mp['sort_order']))
                 added += 1
 
-        print(f"  [{slug}] '{cat_name}': {updated} güncellendi, {added} eklendi")
+        print(f"  [{slug}] '{cat_name}': {updated} güncellendi, {added} eklendi, {deleted} silindi")
 
 conn.commit()
 conn.close()
