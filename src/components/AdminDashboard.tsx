@@ -56,6 +56,27 @@ export default function AdminDashboard({
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [filterCat, setFilterCat] = useState<number | 'all'>('all');
+  const [quickEditId, setQuickEditId] = useState<number | null>(null);
+  const [quickEditForm, setQuickEditForm] = useState({ name: '', price: '' });
+
+  const startQuickEdit = (p: Product) => {
+    setQuickEditId(p.id);
+    setQuickEditForm({ name: p.name, price: String(p.price) });
+    setEditProduct(null);
+  };
+
+  const handleSaveQuickEdit = async (p: Product) => {
+    const name = quickEditForm.name.trim();
+    const price = Number(quickEditForm.price);
+    if (!name || isNaN(price)) { setQuickEditId(null); return; }
+    await fetch(apiUrl(`/api/products/${p.id}`), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, price }),
+    });
+    setProducts(products.map((x) => x.id === p.id ? { ...x, name, price } : x));
+    setQuickEditId(null);
+    showMsg('Ürün güncellendi ✓');
+  };
 
   // Category form
   const [catForm, setCatForm] = useState({ name: '', cover_url: '' });
@@ -469,11 +490,11 @@ export default function AdminDashboard({
               </button>
             </div>
 
-            {(showAddProduct || editProduct) && (
-              <form onSubmit={editProduct ? handleEditProduct : handleAddProduct}
+            {showAddProduct && (
+              <form onSubmit={handleAddProduct}
                 className="rounded-2xl p-5 mb-5" style={{ background: 'var(--surface)', border: '1px solid rgba(201,169,110,0.25)' }}>
                 <h3 className="font-semibold mb-4" style={{ color: 'var(--gold)', fontSize: 15 }}>
-                  {editProduct ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}
+                  Yeni Ürün Ekle
                 </h3>
                 <div className="grid gap-3">
                   <div>
@@ -543,9 +564,9 @@ export default function AdminDashboard({
                 <div className="flex gap-3 mt-4">
                   <button type="submit" className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
                     style={{ background: 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#0D0D0D' }}>
-                    {editProduct ? 'Güncelle' : 'Ekle'}
+                    Ekle
                   </button>
-                  <button type="button" onClick={() => { setShowAddProduct(false); setEditProduct(null); setProductForm(emptyProduct); }}
+                  <button type="button" onClick={() => { setShowAddProduct(false); setProductForm(emptyProduct); }}
                     className="px-4 py-2.5 rounded-xl text-sm"
                     style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
                     İptal
@@ -565,49 +586,138 @@ export default function AdminDashboard({
                 </div>
               ) : (
                 filteredProducts.map((p, idx) => (
+                  editProduct?.id === p.id ? (
+                    // ── Tam düzenleme formu inline ──
+                    <form key={p.id} onSubmit={handleEditProduct}
+                      className="rounded-2xl p-5" style={{ background: 'var(--surface)', border: '1px solid rgba(201,169,110,0.25)' }}>
+                      <h3 className="font-semibold mb-4" style={{ color: 'var(--gold)', fontSize: 15 }}>Ürünü Düzenle</h3>
+                      <div className="grid gap-3">
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Ürün Adı *</label>
+                          <input style={INPUT_STYLE} value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} required />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Fiyat *</label>
+                            <input style={INPUT_STYLE} type="number" step="0.01" min="0" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} required />
+                          </div>
+                          <div>
+                            <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Kategori *</label>
+                            <select style={{ ...INPUT_STYLE, cursor: 'pointer' }} value={productForm.category_id} onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value })} required>
+                              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Açıklama</label>
+                          <textarea style={{ ...INPUT_STYLE, resize: 'none', height: 72 }} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} />
+                        </div>
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Görsel</label>
+                          <div className="flex gap-2">
+                            <input style={{ ...INPUT_STYLE, flex: 1 }} value={productForm.image_url} onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })} placeholder="https://..." />
+                            <label className="flex items-center justify-center rounded-xl cursor-pointer flex-shrink-0"
+                              style={{ width: 42, height: 42, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--gold)', fontSize: 18 }}>
+                              🖼️
+                              <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                                const file = e.target.files?.[0]; if (!file) return; e.target.value = '';
+                                const fd = new FormData(); fd.append('file', file);
+                                showMsg('Yükleniyor...');
+                                const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
+                                const data = await res.json();
+                                if (res.ok) { setProductForm((f) => ({ ...f, image_url: data.url })); showMsg('Görsel yüklendi ✓'); }
+                                else showMsg(data.error || 'Yükleme hatası');
+                              }} />
+                            </label>
+                          </div>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <div onClick={() => setProductForm({ ...productForm, is_featured: !productForm.is_featured })}
+                            className="relative rounded-full transition-all" style={{ width: 40, height: 22, background: productForm.is_featured ? 'var(--gold)' : 'var(--border)' }}>
+                            <div className="absolute top-1 rounded-full transition-all" style={{ width: 14, height: 14, background: '#fff', left: productForm.is_featured ? 22 : 4 }} />
+                          </div>
+                          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Öne Çıkan</span>
+                        </label>
+                      </div>
+                      <div className="flex gap-3 mt-4">
+                        <button type="submit" className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
+                          style={{ background: 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#0D0D0D' }}>Güncelle</button>
+                        <button type="button" onClick={() => { setEditProduct(null); setProductForm(emptyProduct); }}
+                          className="px-4 py-2.5 rounded-xl text-sm"
+                          style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>İptal</button>
+                      </div>
+                    </form>
+                  ) : (
                   <div key={p.id}
-                    draggable={filterCat !== 'all'}
+                    draggable={filterCat !== 'all' && quickEditId !== p.id}
                     onDragStart={() => { if (filterCat !== 'all') prodDragIndex.current = idx; }}
                     onDragOver={(e) => { if (filterCat !== 'all') { e.preventDefault(); setProdDragOver(idx); } }}
                     onDragLeave={() => setProdDragOver(null)}
                     onDrop={() => { if (filterCat !== 'all') handleProductDrop(idx); }}
                     onDragEnd={() => { prodDragIndex.current = null; setProdDragOver(null); }}
-                    className="flex items-center gap-3 rounded-2xl p-3 transition-all"
+                    className="rounded-2xl p-3 transition-all"
                     style={{
                       background: 'var(--surface)',
                       border: `1px solid ${prodDragOver === idx && filterCat !== 'all' ? 'var(--gold)' : 'var(--border)'}`,
                       opacity: p.is_available ? 1 : 0.5,
-                      cursor: filterCat !== 'all' ? 'grab' : 'default',
                     }}>
-                    {filterCat !== 'all' && (
-                      <span className="flex-shrink-0 select-none" style={{ color: 'var(--text-secondary)', fontSize: 16 }}>⠿</span>
-                    )}
-                    {p.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img draggable={false} src={p.image_url} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                    {quickEditId === p.id ? (
+                      // ── Hızlı düzenleme ──
+                      <div className="flex items-center gap-2">
+                        <input autoFocus style={{ ...INPUT_STYLE, flex: 1, padding: '6px 10px', fontSize: 13 }}
+                          value={quickEditForm.name}
+                          onChange={(e) => setQuickEditForm((f) => ({ ...f, name: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleSaveQuickEdit(p); if (e.key === 'Escape') setQuickEditId(null); }}
+                          placeholder="Ürün adı" />
+                        <input style={{ ...INPUT_STYLE, width: 90, padding: '6px 10px', fontSize: 13 }}
+                          type="number" step="0.01" min="0"
+                          value={quickEditForm.price}
+                          onChange={(e) => setQuickEditForm((f) => ({ ...f, price: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleSaveQuickEdit(p); if (e.key === 'Escape') setQuickEditId(null); }}
+                          placeholder="Fiyat" />
+                        <button type="button" onClick={() => handleSaveQuickEdit(p)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0"
+                          style={{ background: 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#0D0D0D' }}>✓</button>
+                        <button type="button" onClick={() => setQuickEditId(null)}
+                          className="w-8 h-8 rounded-lg text-sm flex items-center justify-center flex-shrink-0"
+                          style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>✕</button>
+                      </div>
                     ) : (
-                      <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center text-lg" style={{ background: 'var(--surface-2)' }}>
-                        {categories.find((c) => c.id === p.category_id)?.icon || '🍽️'}
+                      <div className="flex items-center gap-3" style={{ cursor: filterCat !== 'all' ? 'grab' : 'default' }}>
+                        {filterCat !== 'all' && (
+                          <span className="flex-shrink-0 select-none" style={{ color: 'var(--text-secondary)', fontSize: 16 }}>⠿</span>
+                        )}
+                        {p.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img draggable={false} src={p.image_url} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center text-lg" style={{ background: 'var(--surface-2)' }}>
+                            {categories.find((c) => c.id === p.category_id)?.icon || '🍽️'}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{p.name}</p>
+                          <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{p.category_name}</p>
+                        </div>
+                        <span className="font-bold flex-shrink-0" style={{ color: 'var(--gold)', fontSize: 15 }}>
+                          ₺{p.price % 1 === 0 ? p.price.toFixed(0) : p.price.toFixed(2)}
+                        </span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button onClick={() => toggleAvailable(p)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
+                            style={{ background: 'var(--surface-2)', color: p.is_available ? '#4ade80' : 'var(--text-secondary)' }}>
+                            {p.is_available ? '👁' : '🚫'}
+                          </button>
+                          <button onClick={() => startQuickEdit(p)} className="w-8 h-8 rounded-lg text-xs flex items-center justify-center font-bold flex-shrink-0"
+                            style={{ background: 'var(--surface-2)', color: 'var(--gold)', border: '1px solid var(--border)' }} title="Hızlı düzenle">⚡</button>
+                          <button onClick={() => { startEditProduct(p); setShowAddProduct(false); }} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
+                            style={{ background: 'var(--surface-2)', color: 'var(--gold)' }} title="Tam düzenle">✏️</button>
+                          <button onClick={() => handleDeleteProduct(p.id)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
+                            style={{ background: 'var(--surface-2)', color: '#ff6b6b' }}>🗑</button>
+                        </div>
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{p.name}</p>
-                      <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{p.category_name}</p>
-                    </div>
-                    <span className="font-bold flex-shrink-0" style={{ color: 'var(--gold)', fontSize: 15 }}>
-                      ₺{p.price % 1 === 0 ? p.price.toFixed(0) : p.price.toFixed(2)}
-                    </span>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button onClick={() => toggleAvailable(p)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
-                        style={{ background: 'var(--surface-2)', color: p.is_available ? '#4ade80' : 'var(--text-secondary)' }}>
-                        {p.is_available ? '👁' : '🚫'}
-                      </button>
-                      <button onClick={() => startEditProduct(p)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
-                        style={{ background: 'var(--surface-2)', color: 'var(--gold)' }}>✏️</button>
-                      <button onClick={() => handleDeleteProduct(p.id)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
-                        style={{ background: 'var(--surface-2)', color: '#ff6b6b' }}>🗑</button>
-                    </div>
                   </div>
+                  )
                 ))
               )}
             </div>
