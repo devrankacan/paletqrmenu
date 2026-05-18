@@ -86,7 +86,7 @@ for cat_name in TARGET_CATEGORIES:
         updated = 0
         for prod in target_products:
             merkez_prod = merkez_products.get(prod['name'])
-            if merkez_prod and merkez_prod['image_url'] != prod['image_url']:
+            if merkez_prod and merkez_prod['image_url'] and merkez_prod['image_url'] != prod['image_url']:
                 c.execute("""
                     UPDATE products SET image_url = ? WHERE id = ?
                 """, (merkez_prod['image_url'], prod['id']))
