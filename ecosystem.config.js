@@ -9,7 +9,7 @@ module.exports = {
       cwd: __dirname,
       env: {
         NODE_ENV: 'production',
-        PORT: 3001,
+        PORT: 3003,
         BASE_PATH: '/paletpastanesi',
         JWT_SECRET: 'BURAYA_GUCLU_BIR_SIFRE_YAZIN',
       },
