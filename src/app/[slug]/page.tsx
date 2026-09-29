@@ -25,6 +25,7 @@ export default async function BranchMenuPage({ params }: { params: Promise<{ slu
     products: getProductsByCategory(cat.id) as Array<{
       id: number; name: string; description: string; price: number;
       image_url: string; is_featured: number; is_available: number;
+      weight?: string; allergens?: string;
     }>,
   }));
 
