@@ -5,7 +5,7 @@ import { InfoDrawer, SearchOverlay, ProductModal, type ProductModalProduct } fro
 import translations, { type Lang, nextLang } from '@/lib/translations';
 import { translateMenu } from '@/lib/translate';
 
-type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number };
+type Product = { id: number; name: string; description: string; price: number; image_url: string; is_featured: number; is_available: number; weight?: string; allergens?: string };
 type Category = { id: number; name: string; slug: string; icon: string; sort_order: number; products: Product[]; cover_url?: string };
 type BranchInfo = {
   name?: string; address?: string; phone?: string; working_hours?: string;

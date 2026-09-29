@@ -10,6 +10,7 @@ type Product = {
   id: number; name: string; description: string; price: number;
   image_url: string; is_featured: number; is_available: number;
   category_id: number; category_name: string;
+  weight?: string; allergens?: string;
 };
 type Settings = Record<string, string>;
 
@@ -31,6 +32,13 @@ function slugify(s: string) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+const ALLERGENS = [
+  'Glüten', 'Karides/Yengeç', 'Yumurta', 'Balık',
+  'Yer Fıstığı', 'Soya', 'Süt/Laktoz', 'Kabuklu Yemişler',
+  'Kereviz', 'Hardal', 'Susam', 'Sülfitler',
+  'Acı Bakla', 'Yumuşakça',
+];
+
 export default function AdminDashboard({
   initialBranches, settings, username,
 }: {
@@ -51,7 +59,7 @@ export default function AdminDashboard({
   const [branchSettingsForm, setBranchSettingsForm] = useState({ name: '', address: '', phone: '', working_hours: '', wifi_password: '', logo_url: '', cover_url: '', theme: 'classic', instagram: '', contact_email: '' });
 
   // Product form
-  const emptyProduct = { name: '', description: '', price: '', image_url: '', category_id: '', is_featured: false };
+  const emptyProduct = { name: '', description: '', price: '', image_url: '', category_id: '', is_featured: false, weight_value: '', weight_unit: 'gr', allergens: [] as string[] };
   const [productForm, setProductForm] = useState(emptyProduct);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -164,9 +172,10 @@ export default function AdminDashboard({
   // ── Product CRUD ──
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    const weight = productForm.weight_value ? `${productForm.weight_value} ${productForm.weight_unit}` : '';
     const res = await fetch(apiUrl('/api/products'), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...productForm, price: Number(productForm.price), is_featured: productForm.is_featured ? 1 : 0 }),
+      body: JSON.stringify({ ...productForm, price: Number(productForm.price), is_featured: productForm.is_featured ? 1 : 0, weight, allergens: JSON.stringify(productForm.allergens) }),
     });
     if (res.ok) {
       setProductForm(emptyProduct);
@@ -179,9 +188,10 @@ export default function AdminDashboard({
   const handleEditProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editProduct) return;
+    const weight = productForm.weight_value ? `${productForm.weight_value} ${productForm.weight_unit}` : '';
     await fetch(apiUrl(`/api/products/${editProduct.id}`), {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...productForm, price: Number(productForm.price), is_featured: productForm.is_featured ? 1 : 0, category_id: Number(productForm.category_id) }),
+      body: JSON.stringify({ ...productForm, price: Number(productForm.price), is_featured: productForm.is_featured ? 1 : 0, category_id: Number(productForm.category_id), weight, allergens: JSON.stringify(productForm.allergens) }),
     });
     setEditProduct(null);
     setProductForm(emptyProduct);
@@ -205,7 +215,12 @@ export default function AdminDashboard({
   };
 
   const startEditProduct = (p: Product) => {
-    setProductForm({ name: p.name, description: p.description || '', price: String(p.price), image_url: p.image_url || '', category_id: String(p.category_id), is_featured: p.is_featured === 1 });
+    const parts = (p.weight || '').trim().split(' ');
+    const weight_value = parts.length >= 2 ? parts[0] : '';
+    const weight_unit = parts.length >= 2 ? parts[1] : 'gr';
+    let allergens: string[] = [];
+    try { allergens = JSON.parse(p.allergens || '[]'); } catch { allergens = []; }
+    setProductForm({ name: p.name, description: p.description || '', price: String(p.price), image_url: p.image_url || '', category_id: String(p.category_id), is_featured: p.is_featured === 1, weight_value, weight_unit, allergens });
     setEditProduct(p);
     setShowAddProduct(false);
   };
@@ -414,6 +429,47 @@ export default function AdminDashboard({
                   <div>
                     <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Açıklama</label>
                     <textarea style={{ ...INPUT_STYLE, resize: 'none', height: 72 }} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="Ürün açıklaması..." />
+                  </div>
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Gramaj / Miktar</label>
+                    <div className="flex gap-2">
+                      <input style={{ ...INPUT_STYLE, flex: 1 }} type="number" min="0" step="any"
+                        value={productForm.weight_value}
+                        onChange={(e) => setProductForm({ ...productForm, weight_value: e.target.value })}
+                        placeholder="180" />
+                      <select style={{ ...INPUT_STYLE, width: 100, cursor: 'pointer' }}
+                        value={productForm.weight_unit}
+                        onChange={(e) => setProductForm({ ...productForm, weight_unit: e.target.value })}>
+                        <option value="gr">gr</option>
+                        <option value="kg">kg</option>
+                        <option value="ml">ml</option>
+                        <option value="cl">cl</option>
+                        <option value="lt">lt</option>
+                        <option value="adet">adet</option>
+                        <option value="porsiyon">porsiyon</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>Alerjenler</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      {ALLERGENS.map((a) => {
+                        const checked = productForm.allergens.includes(a);
+                        return (
+                          <label key={a} className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-xl"
+                            style={{ background: checked ? 'rgba(201,169,110,0.12)' : 'var(--surface-2)', border: checked ? '1px solid rgba(201,169,110,0.35)' : '1px solid var(--border)' }}>
+                            <input type="checkbox" checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...productForm.allergens, a]
+                                  : productForm.allergens.filter((x) => x !== a);
+                                setProductForm({ ...productForm, allergens: next });
+                              }} />
+                            <span className="text-xs" style={{ color: checked ? 'var(--gold)' : 'var(--text-secondary)' }}>{a}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Görsel</label>

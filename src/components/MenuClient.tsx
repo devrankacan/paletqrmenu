@@ -8,6 +8,7 @@ import { translateMenu } from '@/lib/translate';
 type Product = {
   id: number; name: string; description: string; price: number;
   image_url: string; is_featured: number; is_available: number;
+  weight?: string; allergens?: string;
 };
 type Category = {
   id: number; name: string; slug: string; icon: string; sort_order: number;

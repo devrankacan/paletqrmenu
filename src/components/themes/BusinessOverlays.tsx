@@ -375,6 +375,7 @@ export function SearchOverlay({
 export type ProductModalProduct = {
   id: number; name: string; description: string;
   price: number; image_url: string; is_featured: number;
+  weight?: string; allergens?: string;
 };
 
 export function ProductModal({
@@ -469,13 +470,38 @@ export function ProductModal({
             {product.name}
           </h2>
           {product.description && (
-            <p style={{ color: c.textSub, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 18 }}>
+            <p style={{ color: c.textSub, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
               {product.description}
             </p>
           )}
-          <p style={{ color: c.accent, fontSize: 30, fontWeight: 900, margin: 0 }}>
+          <p style={{ color: c.accent, fontSize: 30, fontWeight: 900, margin: 0, marginBottom: product.weight || (product.allergens && product.allergens !== '[]') ? 18 : 0 }}>
             {currency}{fmt(product.price)}
           </p>
+          {product.weight && (
+            <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 13, color: c.textSub }}>⚖️</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: c.textSub }}>{product.weight}</span>
+            </div>
+          )}
+          {(() => {
+            let list: string[] = [];
+            try { list = JSON.parse(product.allergens || '[]'); } catch { list = []; }
+            return list.length > 0 ? (
+              <div style={{ marginTop: 14 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: c.textSub, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Alerjenler</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {list.map((a) => (
+                    <span key={a} style={{
+                      fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 99,
+                      background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                      color: isDark ? 'rgba(255,255,255,0.7)' : '#555',
+                      border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.1)',
+                    }}>{a}</span>
+                  ))}
+                </div>
+              </div>
+            ) : null;
+          })()}
         </div>
       </div>
     </>

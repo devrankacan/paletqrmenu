@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { category_id, name, description, price, image_url, is_featured } = body;
+  const { category_id, name, description, price, image_url, is_featured, weight, allergens } = body;
   if (!category_id || !name || price === undefined) {
     return NextResponse.json({ error: 'category_id, name ve price zorunludur' }, { status: 400 });
   }
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     category_id: Number(category_id), name,
     description: description || '', price: Number(price),
     image_url: image_url || '', is_featured: is_featured ? 1 : 0,
+    weight: weight || '', allergens: allergens || '[]',
   });
   return NextResponse.json({ id, ok: true });
 }

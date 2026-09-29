@@ -121,6 +121,15 @@ export function initDb() {
     );
   `);
 
+  // Migration: add weight and allergens to products if missing
+  const productCols = (db.prepare('PRAGMA table_info(products)').all() as Array<{ name: string }>).map((c) => c.name);
+  if (!productCols.includes('weight')) {
+    db.exec(`ALTER TABLE products ADD COLUMN weight TEXT DEFAULT ''`);
+  }
+  if (!productCols.includes('allergens')) {
+    db.exec(`ALTER TABLE products ADD COLUMN allergens TEXT DEFAULT '[]'`);
+  }
+
   // Seed settings
   const stCount = (db.prepare('SELECT COUNT(*) as n FROM settings').get() as { n: number }).n;
   if (stCount === 0) {
@@ -235,17 +244,19 @@ export function getAllProductsWithCategoryByBranch(branchId: number) {
 export function createProduct(data: {
   category_id: number; name: string; description?: string;
   price: number; image_url?: string; is_featured?: number;
+  weight?: string; allergens?: string;
 }) {
   const result = getDb().prepare(`
-    INSERT INTO products (category_id, name, description, price, image_url, is_featured)
-    VALUES (@category_id, @name, @description, @price, @image_url, @is_featured)
-  `).run(data);
+    INSERT INTO products (category_id, name, description, price, image_url, is_featured, weight, allergens)
+    VALUES (@category_id, @name, @description, @price, @image_url, @is_featured, @weight, @allergens)
+  `).run({ description: '', image_url: '', is_featured: 0, weight: '', allergens: '[]', ...data });
   return result.lastInsertRowid;
 }
 
 export function updateProduct(id: number, data: {
   name?: string; description?: string; price?: number;
-  image_url?: string; is_available?: number; is_featured?: number; category_id?: number;
+  image_url?: string; is_available?: number; is_featured?: number;
+  category_id?: number; weight?: string; allergens?: string;
 }) {
   const fields = Object.keys(data).map((k) => `${k} = @${k}`).join(', ');
   getDb().prepare(`UPDATE products SET ${fields} WHERE id = @id`).run({ ...data, id });
