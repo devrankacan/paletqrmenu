@@ -3,6 +3,14 @@
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiUrl } from '@/lib/api';
+import {
+  DndContext, PointerSensor, useSensor, useSensors, closestCenter,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type Branch = { id: number; name: string; slug: string; address: string; phone: string; working_hours: string; wifi_password: string };
 type Category = { id: number; name: string; slug: string; icon: string; cover_url?: string };
@@ -13,6 +21,133 @@ type Product = {
   weight?: string; allergens?: string;
 };
 type Settings = Record<string, string>;
+
+/* ── Sortable row bileşenleri ────────────────────────────────────────────── */
+
+function SortableProductRow({ p, categories, inlinePrice, setInlinePrice, saveInlinePrice, toggleAvailable, startEditProduct, onDelete }: {
+  p: Product; categories: Category[];
+  inlinePrice: { id: number; value: string } | null;
+  setInlinePrice: (v: { id: number; value: string } | null) => void;
+  saveInlinePrice: (id: number, value: string) => void;
+  toggleAvailable: (p: Product) => void;
+  startEditProduct: (p: Product) => void;
+  onDelete: (id: number) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
+  return (
+    <div ref={setNodeRef} className="flex items-center gap-3 rounded-2xl p-3"
+      style={{
+        transform: CSS.Transform.toString(transform), transition,
+        background: 'var(--surface)', border: '1px solid var(--border)',
+        opacity: isDragging ? 0.4 : (p.is_available ? 1 : 0.5),
+      }}>
+      <div {...attributes} {...listeners}
+        className="flex-shrink-0 flex items-center justify-center"
+        style={{ width: 20, color: 'var(--text-secondary)', fontSize: 18, cursor: 'grab', userSelect: 'none' }}>
+        ⠿
+      </div>
+      {p.image_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={p.image_url} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+      ) : (
+        <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center text-lg" style={{ background: 'var(--surface-2)' }}>
+          {categories.find((c) => c.id === p.category_id)?.icon || '🍽️'}
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{p.name}</p>
+        <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{p.category_name}</p>
+      </div>
+      {inlinePrice?.id === p.id ? (
+        <input autoFocus type="number" step="0.01" min="0"
+          value={inlinePrice.value}
+          onChange={(e) => setInlinePrice({ id: p.id, value: e.target.value })}
+          onBlur={() => saveInlinePrice(p.id, inlinePrice.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') saveInlinePrice(p.id, inlinePrice.value); if (e.key === 'Escape') setInlinePrice(null); }}
+          style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--gold)', borderRadius: 12, padding: '4px 8px', fontSize: 14, fontWeight: 700, outline: 'none', width: 80, textAlign: 'right' }} />
+      ) : (
+        <span className="font-bold flex-shrink-0 cursor-pointer" title="Fiyatı düzenle"
+          onClick={() => setInlinePrice({ id: p.id, value: String(p.price) })}
+          style={{ color: 'var(--gold)', fontSize: 15 }}>
+          ₺{p.price % 1 === 0 ? p.price.toFixed(0) : p.price.toFixed(2)}
+        </span>
+      )}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <button onClick={() => toggleAvailable(p)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
+          style={{ background: 'var(--surface-2)', color: p.is_available ? '#4ade80' : 'var(--text-secondary)' }}>
+          {p.is_available ? '👁' : '🚫'}
+        </button>
+        <button onClick={() => startEditProduct(p)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
+          style={{ background: 'var(--surface-2)', color: 'var(--gold)' }}>✏️</button>
+        <button onClick={() => onDelete(p.id)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
+          style={{ background: 'var(--surface-2)', color: '#ff6b6b' }}>🗑</button>
+      </div>
+    </div>
+  );
+}
+
+function SortableCategoryRow({ c, selectedBranch, fetchBranchData, onDelete, showMsg }: {
+  c: Category;
+  selectedBranch: { id: number } | null;
+  fetchBranchData: (id: number) => Promise<void>;
+  onDelete: (id: number) => void;
+  showMsg: (m: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: c.id });
+  return (
+    <div ref={setNodeRef} className="flex items-center gap-3 rounded-2xl p-3"
+      style={{
+        transform: CSS.Transform.toString(transform), transition,
+        background: 'var(--surface)', border: '1px solid var(--border)',
+        opacity: isDragging ? 0.4 : 1,
+      }}>
+      <div {...attributes} {...listeners}
+        className="flex-shrink-0 flex items-center justify-center"
+        style={{ width: 20, color: 'var(--text-secondary)', fontSize: 18, cursor: 'grab', userSelect: 'none' }}>
+        ⠿
+      </div>
+      {c.cover_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={c.cover_url} alt="" className="rounded-xl object-cover flex-shrink-0" style={{ width: 48, height: 48 }} />
+      ) : (
+        <div className="rounded-xl flex-shrink-0 flex items-center justify-center"
+          style={{ width: 48, height: 48, background: 'var(--surface-2)', color: 'var(--text-secondary)', fontSize: 20 }}>🖼️</div>
+      )}
+      <span className="flex-1 font-medium" style={{ color: 'var(--text-primary)' }}>{c.name}</span>
+      <label className="cursor-pointer w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ background: 'var(--surface-2)', color: 'var(--gold)' }} title="Kapak görseli değiştir">
+        📷
+        <input type="file" accept="image/*" className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            e.target.value = '';
+            const fd = new FormData();
+            fd.append('file', file);
+            showMsg('Yükleniyor...');
+            const uploadRes = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
+            const uploadData = await uploadRes.json();
+            if (!uploadRes.ok) { showMsg(uploadData.error || 'Dosya yükleme hatası'); return; }
+            const patchRes = await fetch(apiUrl(`/api/categories/${c.id}`), {
+              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ cover_url: uploadData.url }),
+            });
+            if (!patchRes.ok) {
+              const patchData = await patchRes.json();
+              showMsg(patchData.error || 'Kaydetme hatası — tekrar deneyin');
+              return;
+            }
+            if (selectedBranch) await fetchBranchData(selectedBranch.id);
+            showMsg('Kapak güncellendi ✓');
+          }} />
+      </label>
+      <button onClick={() => onDelete(c.id)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center flex-shrink-0"
+        style={{ background: 'var(--surface-2)', color: '#ff6b6b' }}>🗑</button>
+    </div>
+  );
+}
+
+/* ── Admin Dashboard ─────────────────────────────────────────────────────── */
 
 const INPUT_STYLE = {
   background: 'var(--surface-2)',
@@ -260,6 +395,44 @@ export default function AdminDashboard({
   };
 
   const filteredProducts = filterCat === 'all' ? products : products.filter((p) => p.category_id === filterCat);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const handleProductDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = filteredProducts.findIndex((p) => p.id === Number(active.id));
+    const newIdx = filteredProducts.findIndex((p) => p.id === Number(over.id));
+    const reordered = arrayMove(filteredProducts, oldIdx, newIdx);
+    if (filterCat === 'all') {
+      setProducts(reordered);
+    } else {
+      setProducts([...products.filter((p) => p.category_id !== filterCat), ...reordered]);
+    }
+    await Promise.all(reordered.map((p, idx) =>
+      fetch(apiUrl(`/api/products/${p.id}`), {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sort_order: idx }),
+      })
+    ));
+    showMsg('Sıralama güncellendi ✓');
+  };
+
+  const handleCategoryDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = categories.findIndex((c) => c.id === Number(active.id));
+    const newIdx = categories.findIndex((c) => c.id === Number(over.id));
+    const reordered = arrayMove(categories, oldIdx, newIdx);
+    setCategories(reordered);
+    await Promise.all(reordered.map((c, idx) =>
+      fetch(apiUrl(`/api/categories/${c.id}`), {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sort_order: idx }),
+      })
+    ));
+    showMsg('Kategori sırası güncellendi ✓');
+  };
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
@@ -592,59 +765,26 @@ export default function AdminDashboard({
               </form>
             )}
 
-            <div className="flex flex-col gap-2">
-              {filteredProducts.length === 0 ? (
-                <div className="text-center py-16 rounded-2xl" style={{ background: 'var(--surface)', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
-                  <p className="text-sm">Henüz ürün yok</p>
-                  {categories.length === 0 && <p className="text-xs mt-1">Önce Kategoriler sekmesinden kategori ekleyin</p>}
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProductDragEnd}>
+              <SortableContext items={filteredProducts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-2">
+                  {filteredProducts.length === 0 ? (
+                    <div className="text-center py-16 rounded-2xl" style={{ background: 'var(--surface)', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
+                      <p className="text-sm">Henüz ürün yok</p>
+                      {categories.length === 0 && <p className="text-xs mt-1">Önce Kategoriler sekmesinden kategori ekleyin</p>}
+                    </div>
+                  ) : (
+                    filteredProducts.map((p) => (
+                      <SortableProductRow key={p.id} p={p} categories={categories}
+                        inlinePrice={inlinePrice} setInlinePrice={setInlinePrice}
+                        saveInlinePrice={saveInlinePrice}
+                        toggleAvailable={toggleAvailable} startEditProduct={startEditProduct}
+                        onDelete={handleDeleteProduct} />
+                    ))
+                  )}
                 </div>
-              ) : (
-                filteredProducts.map((p) => (
-                  <div key={p.id} className="flex items-center gap-3 rounded-2xl p-3"
-                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', opacity: p.is_available ? 1 : 0.5 }}>
-                    {p.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.image_url} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center text-lg" style={{ background: 'var(--surface-2)' }}>
-                        {categories.find((c) => c.id === p.category_id)?.icon || '🍽️'}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{p.name}</p>
-                      <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{p.category_name}</p>
-                    </div>
-                    {inlinePrice?.id === p.id ? (
-                      <input
-                        autoFocus
-                        type="number" step="0.01" min="0"
-                        value={inlinePrice.value}
-                        onChange={(e) => setInlinePrice({ id: p.id, value: e.target.value })}
-                        onBlur={() => saveInlinePrice(p.id, inlinePrice.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') saveInlinePrice(p.id, inlinePrice.value); if (e.key === 'Escape') setInlinePrice(null); }}
-                        style={{ ...INPUT_STYLE, width: 80, padding: '4px 8px', fontSize: 14, fontWeight: 700, color: 'var(--gold)', textAlign: 'right' }}
-                      />
-                    ) : (
-                      <span className="font-bold flex-shrink-0 cursor-pointer" title="Fiyatı düzenle"
-                        onClick={() => setInlinePrice({ id: p.id, value: String(p.price) })}
-                        style={{ color: 'var(--gold)', fontSize: 15 }}>
-                        ₺{p.price % 1 === 0 ? p.price.toFixed(0) : p.price.toFixed(2)}
-                      </span>
-                    )}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button onClick={() => toggleAvailable(p)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
-                        style={{ background: 'var(--surface-2)', color: p.is_available ? '#4ade80' : 'var(--text-secondary)' }}>
-                        {p.is_available ? '👁' : '🚫'}
-                      </button>
-                      <button onClick={() => startEditProduct(p)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
-                        style={{ background: 'var(--surface-2)', color: 'var(--gold)' }}>✏️</button>
-                      <button onClick={() => handleDeleteProduct(p.id)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
-                        style={{ background: 'var(--surface-2)', color: '#ff6b6b' }}>🗑</button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+              </SortableContext>
+            </DndContext>
           </div>
         )}
 
@@ -703,53 +843,22 @@ export default function AdminDashboard({
               </form>
             )}
 
-            {categories.length === 0 ? (
-              <div className="text-center py-12 rounded-2xl" style={{ background: 'var(--surface)', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
-                <p className="text-sm">Bu şube için henüz kategori yok</p>
-              </div>
-            ) : (
-              categories.map((c) => (
-                <div key={c.id} className="flex items-center gap-3 rounded-2xl p-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                  {c.cover_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.cover_url} alt="" className="rounded-xl object-cover flex-shrink-0" style={{ width: 48, height: 48 }} />
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+              <SortableContext items={categories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-3">
+                  {categories.length === 0 ? (
+                    <div className="text-center py-12 rounded-2xl" style={{ background: 'var(--surface)', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
+                      <p className="text-sm">Bu şube için henüz kategori yok</p>
+                    </div>
                   ) : (
-                    <div className="rounded-xl flex-shrink-0 flex items-center justify-center"
-                      style={{ width: 48, height: 48, background: 'var(--surface-2)', color: 'var(--text-secondary)', fontSize: 20 }}>🖼️</div>
+                    categories.map((c) => (
+                      <SortableCategoryRow key={c.id} c={c} selectedBranch={selectedBranch}
+                        fetchBranchData={fetchBranchData} onDelete={handleDeleteCategory} showMsg={showMsg} />
+                    ))
                   )}
-                  <span className="flex-1 font-medium" style={{ color: 'var(--text-primary)' }}>{c.name}</span>
-                  <label className="cursor-pointer w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--surface-2)', color: 'var(--gold)' }} title="Kapak görseli değiştir">
-                    📷
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        e.target.value = '';
-                        const fd = new FormData();
-                        fd.append('file', file);
-                        showMsg('Yükleniyor...');
-                        const uploadRes = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
-                        const uploadData = await uploadRes.json();
-                        if (!uploadRes.ok) { showMsg(uploadData.error || 'Dosya yükleme hatası'); return; }
-                        const patchRes = await fetch(apiUrl(`/api/categories/${c.id}`), {
-                          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ cover_url: uploadData.url }),
-                        });
-                        if (!patchRes.ok) {
-                          const patchData = await patchRes.json();
-                          showMsg(patchData.error || 'Kaydetme hatası — tekrar deneyin');
-                          return;
-                        }
-                        if (selectedBranch) await fetchBranchData(selectedBranch.id);
-                        showMsg('Kapak güncellendi ✓');
-                      }} />
-                  </label>
-                  <button onClick={() => handleDeleteCategory(c.id)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--surface-2)', color: '#ff6b6b' }}>🗑</button>
                 </div>
-              ))
-            )}
+              </SortableContext>
+            </DndContext>
           </div>
         )}
 
