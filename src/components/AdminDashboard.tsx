@@ -59,7 +59,7 @@ export default function AdminDashboard({
   const [branchSettingsForm, setBranchSettingsForm] = useState({ name: '', address: '', phone: '', working_hours: '', wifi_password: '', logo_url: '', cover_url: '', theme: 'classic', instagram: '', contact_email: '' });
 
   // Product form
-  const emptyProduct = { name: '', description: '', price: '', image_url: '', category_id: '', is_featured: false, weight_value: '', weight_unit: 'gr', allergens: [] as string[] };
+  const emptyProduct = { name: '', description: '', price: '', image_url: '', category_id: '', is_featured: false, ingredients: [{ qty: '', unit: 'gr', label: '' }] as Array<{ qty: string; unit: string; label: string }>, allergens: [] as string[] };
   const [productForm, setProductForm] = useState(emptyProduct);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -172,7 +172,7 @@ export default function AdminDashboard({
   // ── Product CRUD ──
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const weight = productForm.weight_value ? `${productForm.weight_value} ${productForm.weight_unit}` : '';
+    const weight = JSON.stringify(productForm.ingredients.filter((i) => i.qty.trim() || i.label.trim()));
     const res = await fetch(apiUrl('/api/products'), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...productForm, price: Number(productForm.price), is_featured: productForm.is_featured ? 1 : 0, weight, allergens: JSON.stringify(productForm.allergens) }),
@@ -188,7 +188,7 @@ export default function AdminDashboard({
   const handleEditProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editProduct) return;
-    const weight = productForm.weight_value ? `${productForm.weight_value} ${productForm.weight_unit}` : '';
+    const weight = JSON.stringify(productForm.ingredients.filter((i) => i.qty.trim() || i.label.trim()));
     await fetch(apiUrl(`/api/products/${editProduct.id}`), {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...productForm, price: Number(productForm.price), is_featured: productForm.is_featured ? 1 : 0, category_id: Number(productForm.category_id), weight, allergens: JSON.stringify(productForm.allergens) }),
@@ -215,12 +215,23 @@ export default function AdminDashboard({
   };
 
   const startEditProduct = (p: Product) => {
-    const parts = (p.weight || '').trim().split(' ');
-    const weight_value = parts.length >= 2 ? parts[0] : '';
-    const weight_unit = parts.length >= 2 ? parts[1] : 'gr';
+    let ingredients: Array<{ qty: string; unit: string; label: string }> = [{ qty: '', unit: 'gr', label: '' }];
+    try {
+      const parsed = JSON.parse(p.weight || '[]');
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        ingredients = parsed;
+      } else if (typeof parsed === 'string' || !Array.isArray(parsed)) {
+        throw new Error();
+      }
+    } catch {
+      if (p.weight?.trim()) {
+        const parts = p.weight.trim().split(' ');
+        ingredients = [{ qty: parts[0] || '', unit: parts[1] || 'gr', label: '' }];
+      }
+    }
     let allergens: string[] = [];
     try { allergens = JSON.parse(p.allergens || '[]'); } catch { allergens = []; }
-    setProductForm({ name: p.name, description: p.description || '', price: String(p.price), image_url: p.image_url || '', category_id: String(p.category_id), is_featured: p.is_featured === 1, weight_value, weight_unit, allergens });
+    setProductForm({ name: p.name, description: p.description || '', price: String(p.price), image_url: p.image_url || '', category_id: String(p.category_id), is_featured: p.is_featured === 1, ingredients, allergens });
     setEditProduct(p);
     setShowAddProduct(false);
   };
@@ -431,24 +442,53 @@ export default function AdminDashboard({
                     <textarea style={{ ...INPUT_STYLE, resize: 'none', height: 72 }} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="Ürün açıklaması..." />
                   </div>
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Gramaj / Miktar</label>
-                    <div className="flex gap-2">
-                      <input style={{ ...INPUT_STYLE, flex: 1 }} type="number" min="0" step="any"
-                        value={productForm.weight_value}
-                        onChange={(e) => setProductForm({ ...productForm, weight_value: e.target.value })}
-                        placeholder="180" />
-                      <select style={{ ...INPUT_STYLE, width: 100, cursor: 'pointer' }}
-                        value={productForm.weight_unit}
-                        onChange={(e) => setProductForm({ ...productForm, weight_unit: e.target.value })}>
-                        <option value="gr">gr</option>
-                        <option value="kg">kg</option>
-                        <option value="ml">ml</option>
-                        <option value="cl">cl</option>
-                        <option value="lt">lt</option>
-                        <option value="adet">adet</option>
-                        <option value="porsiyon">porsiyon</option>
-                      </select>
+                    <label className="block text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>Gramaj / İçerik</label>
+                    <div className="flex flex-col gap-2">
+                      {productForm.ingredients.map((item, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <input style={{ ...INPUT_STYLE, width: 72 }} type="number" min="0" step="any"
+                            value={item.qty} placeholder="10"
+                            onChange={(e) => {
+                              const next = [...productForm.ingredients];
+                              next[idx] = { ...next[idx], qty: e.target.value };
+                              setProductForm({ ...productForm, ingredients: next });
+                            }} />
+                          <select style={{ ...INPUT_STYLE, width: 90, cursor: 'pointer' }}
+                            value={item.unit}
+                            onChange={(e) => {
+                              const next = [...productForm.ingredients];
+                              next[idx] = { ...next[idx], unit: e.target.value };
+                              setProductForm({ ...productForm, ingredients: next });
+                            }}>
+                            <option value="gr">gr</option>
+                            <option value="kg">kg</option>
+                            <option value="ml">ml</option>
+                            <option value="cl">cl</option>
+                            <option value="lt">lt</option>
+                            <option value="adet">adet</option>
+                            <option value="porsiyon">porsiyon</option>
+                          </select>
+                          <input style={{ ...INPUT_STYLE, flex: 1 }}
+                            value={item.label} placeholder="Yoğurt (isteğe bağlı)"
+                            onChange={(e) => {
+                              const next = [...productForm.ingredients];
+                              next[idx] = { ...next[idx], label: e.target.value };
+                              setProductForm({ ...productForm, ingredients: next });
+                            }} />
+                          {productForm.ingredients.length > 1 && (
+                            <button type="button"
+                              onClick={() => setProductForm({ ...productForm, ingredients: productForm.ingredients.filter((_, i) => i !== idx) })}
+                              style={{ color: '#ff6b6b', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', flexShrink: 0 }}>✕</button>
+                          )}
+                        </div>
+                      ))}
                     </div>
+                    <button type="button"
+                      onClick={() => setProductForm({ ...productForm, ingredients: [...productForm.ingredients, { qty: '', unit: 'gr', label: '' }] })}
+                      className="text-xs mt-2 px-3 py-1.5 rounded-lg"
+                      style={{ background: 'var(--surface-2)', color: 'var(--gold)', border: '1px solid var(--border)' }}>
+                      + Malzeme Ekle
+                    </button>
                   </div>
                   <div>
                     <label className="block text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>Alerjenler</label>

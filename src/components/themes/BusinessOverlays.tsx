@@ -474,15 +474,35 @@ export function ProductModal({
               {product.description}
             </p>
           )}
-          <p style={{ color: c.accent, fontSize: 30, fontWeight: 900, margin: 0, marginBottom: product.weight || (product.allergens && product.allergens !== '[]') ? 18 : 0 }}>
+          <p style={{ color: c.accent, fontSize: 30, fontWeight: 900, margin: 0, marginBottom: (product.weight && product.weight !== '[]') || (product.allergens && product.allergens !== '[]') ? 18 : 0 }}>
             {currency}{fmt(product.price)}
           </p>
-          {product.weight && (
-            <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 13, color: c.textSub }}>⚖️</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: c.textSub }}>{product.weight}</span>
-            </div>
-          )}
+          {(() => {
+            if (!product.weight) return null;
+            let items: Array<{ qty: string; unit: string; label: string }> = [];
+            try {
+              const parsed = JSON.parse(product.weight);
+              if (Array.isArray(parsed)) items = parsed.filter((i) => i.qty || i.label);
+              else throw new Error();
+            } catch {
+              if (product.weight.trim()) {
+                const parts = product.weight.trim().split(' ');
+                items = [{ qty: parts[0] || '', unit: parts[1] || '', label: '' }];
+              }
+            }
+            return items.length > 0 ? (
+              <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {items.map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 13, color: c.textSub }}>⚖️</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: c.textSub }}>
+                      {item.qty}{item.unit ? ` ${item.unit}` : ''}{item.label ? ` ${item.label}` : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null;
+          })()}
           {(() => {
             let list: string[] = [];
             try { list = JSON.parse(product.allergens || '[]'); } catch { list = []; }
