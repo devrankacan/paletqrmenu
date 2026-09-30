@@ -24,7 +24,7 @@ type Settings = Record<string, string>;
 
 /* ── Sortable row bileşenleri ────────────────────────────────────────────── */
 
-function SortableProductRow({ p, categories, inlinePrice, setInlinePrice, saveInlinePrice, toggleAvailable, startEditProduct, onDelete }: {
+function SortableProductRow({ p, categories, inlinePrice, setInlinePrice, saveInlinePrice, toggleAvailable, startEditProduct, onDelete, dragDisabled }: {
   p: Product; categories: Category[];
   inlinePrice: { id: number; value: string } | null;
   setInlinePrice: (v: { id: number; value: string } | null) => void;
@@ -32,8 +32,9 @@ function SortableProductRow({ p, categories, inlinePrice, setInlinePrice, saveIn
   toggleAvailable: (p: Product) => void;
   startEditProduct: (p: Product) => void;
   onDelete: (id: number) => void;
+  dragDisabled?: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id, disabled: dragDisabled });
   return (
     <div ref={setNodeRef} className="flex items-center gap-3 rounded-2xl p-3"
       style={{
@@ -41,9 +42,9 @@ function SortableProductRow({ p, categories, inlinePrice, setInlinePrice, saveIn
         background: 'var(--surface)', border: '1px solid var(--border)',
         opacity: isDragging ? 0.4 : (p.is_available ? 1 : 0.5),
       }}>
-      <div {...attributes} {...listeners}
+      <div {...(dragDisabled ? {} : { ...attributes, ...listeners })}
         className="flex-shrink-0 flex items-center justify-center"
-        style={{ width: 20, color: 'var(--text-secondary)', fontSize: 18, cursor: 'grab', userSelect: 'none' }}>
+        style={{ width: 20, color: dragDisabled ? 'transparent' : 'var(--text-secondary)', fontSize: 18, cursor: dragDisabled ? 'default' : 'grab', userSelect: 'none' }}>
         ⠿
       </div>
       {p.image_url ? (
@@ -765,6 +766,11 @@ export default function AdminDashboard({
               </form>
             )}
 
+            {filterCat === 'all' && filteredProducts.length > 0 && (
+              <p className="text-xs mb-1 px-1" style={{ color: 'var(--text-secondary)' }}>
+                ⠿ Sıralamak için bir kategori seçin
+              </p>
+            )}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProductDragEnd}>
               <SortableContext items={filteredProducts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                 <div className="flex flex-col gap-2">
@@ -779,7 +785,7 @@ export default function AdminDashboard({
                         inlinePrice={inlinePrice} setInlinePrice={setInlinePrice}
                         saveInlinePrice={saveInlinePrice}
                         toggleAvailable={toggleAvailable} startEditProduct={startEditProduct}
-                        onDelete={handleDeleteProduct} />
+                        onDelete={handleDeleteProduct} dragDisabled={filterCat === 'all'} />
                     ))
                   )}
                 </div>
