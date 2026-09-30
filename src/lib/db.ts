@@ -253,7 +253,7 @@ export function createProduct(data: {
   return result.lastInsertRowid;
 }
 
-const PRODUCT_COLS = new Set(['name', 'description', 'price', 'image_url', 'is_available', 'is_featured', 'category_id', 'weight', 'allergens']);
+const PRODUCT_COLS = new Set(['name', 'description', 'price', 'image_url', 'is_available', 'is_featured', 'category_id', 'weight', 'allergens', 'sort_order']);
 export function updateProduct(id: number, data: {
   name?: string; description?: string; price?: number;
   image_url?: string; is_available?: number; is_featured?: number;
