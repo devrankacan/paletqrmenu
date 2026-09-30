@@ -491,7 +491,9 @@ export function ProductModal({
               }
             }
             return items.length > 0 ? (
-              <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ marginTop: 14 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: c.textSub, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>İçerikler</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {items.map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: 13, color: c.textSub }}>⚖️</span>
@@ -500,6 +502,7 @@ export function ProductModal({
                     </span>
                   </div>
                 ))}
+                </div>
               </div>
             ) : null;
           })()}
