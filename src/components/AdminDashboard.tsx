@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiUrl } from '@/lib/api';
 
@@ -65,6 +65,9 @@ export default function AdminDashboard({
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [filterCat, setFilterCat] = useState<number | 'all'>('all');
   const [inlinePrice, setInlinePrice] = useState<{ id: number; value: string } | null>(null);
+  const catFilterRef = useRef<HTMLDivElement>(null);
+  const scrollCatFilter = (dir: 'left' | 'right') =>
+    catFilterRef.current?.scrollBy({ left: dir === 'right' ? 200 : -200, behavior: 'smooth' });
 
   // Category form
   const [catForm, setCatForm] = useState({ name: '', cover_url: '' });
@@ -385,17 +388,25 @@ export default function AdminDashboard({
         {activeTab === 'products' && selectedBranch && (
           <div>
             <div className="flex items-center gap-3 mb-4 flex-wrap">
-              <div className="flex gap-1 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                <button onClick={() => setFilterCat('all')} className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium"
-                  style={filterCat === 'all' ? { background: 'var(--gold)', color: '#0D0D0D' } : { background: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
-                  Tümü
-                </button>
-                {categories.map((c) => (
-                  <button key={c.id} onClick={() => setFilterCat(c.id)} className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap"
-                    style={filterCat === c.id ? { background: 'var(--gold)', color: '#0D0D0D' } : { background: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
-                    {c.icon} {c.name}
+              <div className="flex-1 min-w-0" style={{ position: 'relative' }}>
+                <button onClick={() => scrollCatFilter('left')}
+                  className="hidden md:flex absolute z-10 items-center justify-center"
+                  style={{ left: 0, top: '50%', transform: 'translateY(-50%)', width: 28, height: 28, borderRadius: '50%', background: 'var(--gold)', color: '#0D0D0D', fontSize: 16, fontWeight: 900, boxShadow: '0 2px 8px rgba(0,0,0,0.5)', flexShrink: 0 }}>‹</button>
+                <div ref={catFilterRef} className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none', paddingLeft: 0 }}>
+                  <button onClick={() => setFilterCat('all')} className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium"
+                    style={filterCat === 'all' ? { background: 'var(--gold)', color: '#0D0D0D' } : { background: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                    Tümü
                   </button>
-                ))}
+                  {categories.map((c) => (
+                    <button key={c.id} onClick={() => setFilterCat(c.id)} className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap"
+                      style={filterCat === c.id ? { background: 'var(--gold)', color: '#0D0D0D' } : { background: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                      {c.icon} {c.name}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => scrollCatFilter('right')}
+                  className="hidden md:flex absolute z-10 items-center justify-center"
+                  style={{ right: 0, top: '50%', transform: 'translateY(-50%)', width: 28, height: 28, borderRadius: '50%', background: 'var(--gold)', color: '#0D0D0D', fontSize: 16, fontWeight: 900, boxShadow: '0 2px 8px rgba(0,0,0,0.5)', flexShrink: 0 }}>›</button>
               </div>
               <label className="flex-shrink-0 cursor-pointer px-3 py-2 rounded-xl text-sm font-medium"
                 style={{ background: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
