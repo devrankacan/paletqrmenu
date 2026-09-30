@@ -253,13 +253,17 @@ export function createProduct(data: {
   return result.lastInsertRowid;
 }
 
+const PRODUCT_COLS = new Set(['name', 'description', 'price', 'image_url', 'is_available', 'is_featured', 'category_id', 'weight', 'allergens']);
 export function updateProduct(id: number, data: {
   name?: string; description?: string; price?: number;
   image_url?: string; is_available?: number; is_featured?: number;
   category_id?: number; weight?: string; allergens?: string;
+  [key: string]: unknown;
 }) {
-  const fields = Object.keys(data).map((k) => `${k} = @${k}`).join(', ');
-  getDb().prepare(`UPDATE products SET ${fields} WHERE id = @id`).run({ ...data, id });
+  const clean = Object.fromEntries(Object.entries(data).filter(([k, v]) => PRODUCT_COLS.has(k) && v !== undefined));
+  if (!Object.keys(clean).length) return;
+  const fields = Object.keys(clean).map((k) => `${k} = @${k}`).join(', ');
+  getDb().prepare(`UPDATE products SET ${fields} WHERE id = @id`).run({ ...clean, id });
 }
 
 export function deleteProduct(id: number) {
