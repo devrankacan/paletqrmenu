@@ -129,8 +129,8 @@ export default function MenuClient({ menuData, settings, branch }: {
       {/* ─── VISUAL CATEGORY STRIP ─── */}
       <div className="sticky z-40" style={{ top: 60, background: 'rgba(13,13,13,0.97)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ position: 'relative' }}>
-          <button onClick={() => scrollCats('left')} className="hidden md:flex absolute left-0 top-0 bottom-0 z-10 items-center px-2"
-            style={{ background: 'linear-gradient(to right, rgba(13,13,13,1) 50%, transparent)', color: 'var(--gold)', fontSize: 22, flexShrink: 0 }}>‹</button>
+          <button onClick={() => scrollCats('left')} className="hidden md:flex absolute left-0 top-0 bottom-0 z-10 items-center px-3"
+            style={{ background: 'linear-gradient(to right, rgba(13,13,13,1) 60%, transparent)', color: 'var(--gold)', fontSize: 28, fontWeight: 700, flexShrink: 0, textShadow: '0 0 8px rgba(201,169,110,0.6)' }}>‹</button>
           <div ref={catScrollRef} className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
           {displayData.map((cat, idx) => {
@@ -162,8 +162,8 @@ export default function MenuClient({ menuData, settings, branch }: {
           })}
           </div>
           </div>
-          <button onClick={() => scrollCats('right')} className="hidden md:flex absolute right-0 top-0 bottom-0 z-10 items-center px-2"
-            style={{ background: 'linear-gradient(to left, rgba(13,13,13,1) 50%, transparent)', color: 'var(--gold)', fontSize: 22, flexShrink: 0 }}>›</button>
+          <button onClick={() => scrollCats('right')} className="hidden md:flex absolute right-0 top-0 bottom-0 z-10 items-center px-3"
+            style={{ background: 'linear-gradient(to left, rgba(13,13,13,1) 60%, transparent)', color: 'var(--gold)', fontSize: 28, fontWeight: 700, flexShrink: 0, textShadow: '0 0 8px rgba(201,169,110,0.6)' }}>›</button>
         </div>
       </div>
 
