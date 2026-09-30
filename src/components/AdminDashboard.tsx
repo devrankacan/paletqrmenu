@@ -64,6 +64,7 @@ export default function AdminDashboard({
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [filterCat, setFilterCat] = useState<number | 'all'>('all');
+  const [inlinePrice, setInlinePrice] = useState<{ id: number; value: string } | null>(null);
 
   // Category form
   const [catForm, setCatForm] = useState({ name: '', cover_url: '' });
@@ -204,6 +205,18 @@ export default function AdminDashboard({
     await fetch(apiUrl(`/api/products/${id}`), { method: 'DELETE' });
     setProducts(products.filter((p) => p.id !== id));
     showMsg('Ürün silindi');
+  };
+
+  const saveInlinePrice = async (id: number, value: string) => {
+    const price = parseFloat(value);
+    if (isNaN(price) || price < 0) { setInlinePrice(null); return; }
+    await fetch(apiUrl(`/api/products/${id}`), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ price }),
+    });
+    setProducts(products.map((x) => x.id === id ? { ...x, price } : x));
+    setInlinePrice(null);
+    showMsg('Fiyat güncellendi ✓');
   };
 
   const toggleAvailable = async (p: Product) => {
@@ -590,9 +603,23 @@ export default function AdminDashboard({
                       <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{p.name}</p>
                       <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{p.category_name}</p>
                     </div>
-                    <span className="font-bold flex-shrink-0" style={{ color: 'var(--gold)', fontSize: 15 }}>
-                      ₺{p.price % 1 === 0 ? p.price.toFixed(0) : p.price.toFixed(2)}
-                    </span>
+                    {inlinePrice?.id === p.id ? (
+                      <input
+                        autoFocus
+                        type="number" step="0.01" min="0"
+                        value={inlinePrice.value}
+                        onChange={(e) => setInlinePrice({ id: p.id, value: e.target.value })}
+                        onBlur={() => saveInlinePrice(p.id, inlinePrice.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') saveInlinePrice(p.id, inlinePrice.value); if (e.key === 'Escape') setInlinePrice(null); }}
+                        style={{ ...INPUT_STYLE, width: 80, padding: '4px 8px', fontSize: 14, fontWeight: 700, color: 'var(--gold)', textAlign: 'right' }}
+                      />
+                    ) : (
+                      <span className="font-bold flex-shrink-0 cursor-pointer" title="Fiyatı düzenle"
+                        onClick={() => setInlinePrice({ id: p.id, value: String(p.price) })}
+                        style={{ color: 'var(--gold)', fontSize: 15 }}>
+                        ₺{p.price % 1 === 0 ? p.price.toFixed(0) : p.price.toFixed(2)}
+                      </span>
+                    )}
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <button onClick={() => toggleAvailable(p)} className="w-8 h-8 rounded-lg text-sm flex items-center justify-center"
                         style={{ background: 'var(--surface-2)', color: p.is_available ? '#4ade80' : 'var(--text-secondary)' }}>
