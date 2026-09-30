@@ -129,8 +129,8 @@ export default function MenuClient({ menuData, settings, branch }: {
       {/* ─── VISUAL CATEGORY STRIP ─── */}
       <div className="sticky z-40" style={{ top: 60, background: 'rgba(13,13,13,0.97)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ position: 'relative' }}>
-          <button onClick={() => scrollCats('left')} className="hidden md:flex absolute left-0 top-0 bottom-0 z-10 items-center px-3"
-            style={{ background: 'linear-gradient(to right, rgba(13,13,13,1) 60%, transparent)', color: 'var(--gold)', fontSize: 28, fontWeight: 700, flexShrink: 0, textShadow: '0 0 8px rgba(201,169,110,0.6)' }}>‹</button>
+          <button onClick={() => scrollCats('left')} className="hidden md:flex absolute z-10 items-center justify-center"
+            style={{ left: 8, top: '50%', transform: 'translateY(-50%)', width: 34, height: 34, borderRadius: '50%', background: 'var(--gold)', color: '#0d0d0d', fontSize: 20, fontWeight: 900, boxShadow: '0 2px 10px rgba(0,0,0,0.6)', flexShrink: 0 }}>‹</button>
           <div ref={catScrollRef} className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
           {displayData.map((cat, idx) => {
@@ -162,8 +162,8 @@ export default function MenuClient({ menuData, settings, branch }: {
           })}
           </div>
           </div>
-          <button onClick={() => scrollCats('right')} className="hidden md:flex absolute right-0 top-0 bottom-0 z-10 items-center px-3"
-            style={{ background: 'linear-gradient(to left, rgba(13,13,13,1) 60%, transparent)', color: 'var(--gold)', fontSize: 28, fontWeight: 700, flexShrink: 0, textShadow: '0 0 8px rgba(201,169,110,0.6)' }}>›</button>
+          <button onClick={() => scrollCats('right')} className="hidden md:flex absolute z-10 items-center justify-center"
+            style={{ right: 8, top: '50%', transform: 'translateY(-50%)', width: 34, height: 34, borderRadius: '50%', background: 'var(--gold)', color: '#0d0d0d', fontSize: 20, fontWeight: 900, boxShadow: '0 2px 10px rgba(0,0,0,0.6)', flexShrink: 0 }}>›</button>
         </div>
       </div>
 
