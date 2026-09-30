@@ -507,6 +507,13 @@ export function ProductModal({
             ) : null;
           })()}
           {(() => {
+            const ALLERGEN_ICONS: Record<string, string> = {
+              'Glüten': '🌾', 'Karides': '🦐', 'Yengeç': '🦀', 'Yumurta': '🥚',
+              'Balık': '🐟', 'Yer Fıstığı': '🥜', 'Soya': '🫘', 'Süt': '🥛',
+              'Laktoz': '🥛', 'Kabuklu Yemişler': '🌰', 'Kereviz': '🥬',
+              'Hardal': '🌼', 'Susam': '🌱', 'Sülfitler': '🍇',
+              'Acı Bakla': '🌿', 'Yumuşakça': '🦑',
+            };
             let list: string[] = [];
             try { list = JSON.parse(product.allergens || '[]'); } catch { list = []; }
             return list.length > 0 ? (
@@ -519,7 +526,7 @@ export function ProductModal({
                       background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
                       color: isDark ? 'rgba(255,255,255,0.7)' : '#555',
                       border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.1)',
-                    }}>{a}</span>
+                    }}>{ALLERGEN_ICONS[a] ? `${ALLERGEN_ICONS[a]} ` : ''}{a}</span>
                   ))}
                 </div>
               </div>

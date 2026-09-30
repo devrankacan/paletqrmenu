@@ -113,8 +113,8 @@ export default function ThemeGrid({
 
       {/* Visual category selector */}
       <div style={{ background: '#fff', borderBottom: '2px solid #ebebeb', position: 'relative' }}>
-        <button onClick={() => scrollCats('left')} className="hidden md:flex absolute left-0 top-0 bottom-0 z-10 items-center px-3"
-          style={{ background: 'linear-gradient(to right, rgba(255,255,255,1) 60%, transparent)', color: '#E53E3E', fontSize: 28, fontWeight: 700 }}>‹</button>
+        <button onClick={() => scrollCats('left')} className="hidden md:flex absolute z-10 items-center justify-center"
+          style={{ left: 8, top: '50%', transform: 'translateY(-50%)', width: 34, height: 34, borderRadius: '50%', background: '#E53E3E', color: '#fff', fontSize: 20, fontWeight: 900, boxShadow: '0 2px 10px rgba(0,0,0,0.25)', flexShrink: 0 }}>‹</button>
         <div ref={catScrollRef} className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
           {displayData.map((c, idx) => {
@@ -143,8 +143,8 @@ export default function ThemeGrid({
           })}
         </div>
         </div>
-        <button onClick={() => scrollCats('right')} className="hidden md:flex absolute right-0 top-0 bottom-0 z-10 items-center px-3"
-          style={{ background: 'linear-gradient(to left, rgba(255,255,255,1) 60%, transparent)', color: '#E53E3E', fontSize: 28, fontWeight: 700 }}>›</button>
+        <button onClick={() => scrollCats('right')} className="hidden md:flex absolute z-10 items-center justify-center"
+          style={{ right: 8, top: '50%', transform: 'translateY(-50%)', width: 34, height: 34, borderRadius: '50%', background: '#E53E3E', color: '#fff', fontSize: 20, fontWeight: 900, boxShadow: '0 2px 10px rgba(0,0,0,0.25)', flexShrink: 0 }}>›</button>
       </div>
 
       {/* Product grid */}
