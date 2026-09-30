@@ -41,6 +41,9 @@ export default function MenuClient({ menuData, settings, branch }: {
   const [displayData, setDisplayData] = useState(menuData);
   const [translating, setTranslating] = useState(false);
   const cache = useRef<Partial<Record<Lang, Category[]>>>({});
+  const catScrollRef = useRef<HTMLDivElement>(null);
+  const scrollCats = (dir: 'left' | 'right') =>
+    catScrollRef.current?.scrollBy({ left: dir === 'right' ? 300 : -300, behavior: 'smooth' });
 
   const name = settings.restaurant_name || 'Palet';
   const subtitle = settings.restaurant_subtitle || 'Lezzet Sanatı';
@@ -124,9 +127,12 @@ export default function MenuClient({ menuData, settings, branch }: {
       )}
 
       {/* ─── VISUAL CATEGORY STRIP ─── */}
-      <div className="sticky z-40 overflow-x-auto"
-        style={{ top: 60, scrollbarWidth: 'none', background: 'rgba(13,13,13,0.97)', borderBottom: '1px solid var(--border)' }}>
-        <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
+      <div className="sticky z-40" style={{ top: 60, background: 'rgba(13,13,13,0.97)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ position: 'relative' }}>
+          <button onClick={() => scrollCats('left')} className="hidden md:flex absolute left-0 top-0 bottom-0 z-10 items-center px-2"
+            style={{ background: 'linear-gradient(to right, rgba(13,13,13,1) 50%, transparent)', color: 'var(--gold)', fontSize: 22, flexShrink: 0 }}>‹</button>
+          <div ref={catScrollRef} className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
           {displayData.map((cat, idx) => {
             const isActive = cat.id === activeCatId;
             return (
@@ -154,6 +160,10 @@ export default function MenuClient({ menuData, settings, branch }: {
               </button>
             );
           })}
+          </div>
+          </div>
+          <button onClick={() => scrollCats('right')} className="hidden md:flex absolute right-0 top-0 bottom-0 z-10 items-center px-2"
+            style={{ background: 'linear-gradient(to left, rgba(13,13,13,1) 50%, transparent)', color: 'var(--gold)', fontSize: 22, flexShrink: 0 }}>›</button>
         </div>
       </div>
 

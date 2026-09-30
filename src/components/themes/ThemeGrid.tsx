@@ -31,6 +31,9 @@ export default function ThemeGrid({
   const [displayData, setDisplayData] = useState(menuData);
   const [translating, setTranslating] = useState(false);
   const cache = useRef<Partial<Record<Lang, Category[]>>>({});
+  const catScrollRef = useRef<HTMLDivElement>(null);
+  const scrollCats = (dir: 'left' | 'right') =>
+    catScrollRef.current?.scrollBy({ left: dir === 'right' ? 300 : -300, behavior: 'smooth' });
 
   const name = settings.restaurant_name || 'Restoran';
   const currency = settings.currency || '₺';
@@ -109,7 +112,10 @@ export default function ThemeGrid({
       )}
 
       {/* Visual category selector */}
-      <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', background: '#fff', borderBottom: '2px solid #ebebeb' }}>
+      <div style={{ background: '#fff', borderBottom: '2px solid #ebebeb', position: 'relative' }}>
+        <button onClick={() => scrollCats('left')} className="hidden md:flex absolute left-0 top-0 bottom-0 z-10 items-center px-2"
+          style={{ background: 'linear-gradient(to right, rgba(255,255,255,1) 50%, transparent)', color: '#E53E3E', fontSize: 22 }}>‹</button>
+        <div ref={catScrollRef} className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
           {displayData.map((c, idx) => {
             const isActive = c.id === activeCatId;
@@ -136,6 +142,9 @@ export default function ThemeGrid({
             );
           })}
         </div>
+        </div>
+        <button onClick={() => scrollCats('right')} className="hidden md:flex absolute right-0 top-0 bottom-0 z-10 items-center px-2"
+          style={{ background: 'linear-gradient(to left, rgba(255,255,255,1) 50%, transparent)', color: '#E53E3E', fontSize: 22 }}>›</button>
       </div>
 
       {/* Product grid */}
